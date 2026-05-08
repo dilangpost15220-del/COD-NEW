@@ -1248,8 +1248,10 @@ function renderTable() {
     // ✅ แก้ไข: ตรวจสอบ photoUrl จากหลายแหล่ง
     const photoSrc = photos[p.tracking] || p.photoUrl || p.Photo || p['รูปภาพ'] || p.image || '';
     const photoCell = photoSrc
-      ? `<img class="photo-thumb" src="${photoSrc}" onclick="openPhoto('${p.tracking}','${photoSrc.replace(/'/g,"\\'")}')" onerror="this.style.display='none'">`
-      : `<label class="photo-upload-btn" title="อัปโหลดรูปภาพ"><i class="fas fa-camera"></i><input type="file" accept="image/*" style="display:none" onchange="uploadLocalPhoto(this,'${p.id}','${p.tracking}')"></label>`;
+  ? `<img class="photo-thumb" src="${photoSrc}" 
+         onclick="openPhoto('${p.tracking}','${photoSrc.replace(/'/g,"\\'")}')" 
+         onerror="console.error('Failed to load:', '${photoSrc}'); this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect width=%2248%22 height=%2248%22 fill=%22%23ddd%22/><text x=%2250%%22 y=%2250%%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22>❌</text></svg>'">`
+  : `<label class="photo-upload-btn" title="อัปโหลดรูปภาพ"><i class="fas fa-camera"></i><input type="file" accept="image/*" style="display:none" onchange="uploadLocalPhoto(this,'${p.id}','${p.tracking}')"></label>`;
     return `<tr>
       <td style="color:var(--text3);font-size:11px">${i+1}</td>
       <td><div class="mono">${p.tracking}</div></td>
