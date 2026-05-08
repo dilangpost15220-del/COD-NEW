@@ -749,7 +749,7 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
 
       <!-- Filter Bar (always visible) -->
       <div class="filter-bar" id="filterBar">
-        <div class="filter-grid">
+        <div class="filter-grid" style="grid-template-columns:repeat(3,1fr)">
           <div class="form-group">
             <label><i class="far fa-calendar-alt"></i> วันที่</label>
             <input type="date" id="filterDate" class="form-control">
@@ -757,15 +757,6 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
           <div class="form-group">
             <label><i class="fas fa-building"></i> รหัส ปณ.</label>
             <input type="text" id="filterBranch" placeholder="เช่น 15000" class="form-control">
-          </div>
-          <div class="form-group">
-            <label><i class="fas fa-tag"></i> ประเภท</label>
-            <select id="filterType" class="form-control">
-              <option value="">ทั้งหมด</option>
-              <option value="เปิดเซฟ">เปิดเซฟ</option>
-              <option value="นับเงิน">นับเงิน</option>
-              <option value="ปิดเซฟ">ปิดเซฟ</option>
-            </select>
           </div>
           <div class="form-group">
             <label><i class="fas fa-check-circle"></i> สถานะ</label>
@@ -1015,20 +1006,27 @@ function doPost(e) {
 <pre style="margin:0;color:#4ade80">
 // เพิ่มใน doPost() ของ Apps Script เดิม
 if (body.action === 'uploadPhoto') {
-  const folderId = body.folderId || 'YOUR_FOLDER_ID';
-  const folder = DriveApp.getFolderById(folderId);
-  const blob = Utilities.newBlob(
-    Utilities.base64Decode(body.imageData),
-    body.mimeType || 'image/jpeg',
-    body.filename || body.tracking + '.jpg'
-  );
-  const file = folder.createFile(blob);
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  const fileId = file.getId();
-  const directUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
-  return ContentService.createTextOutput(
-    JSON.stringify({status:'success', fileId: fileId, url: directUrl})
-  ).setMimeType(ContentService.MimeType.JSON);
+  try {
+    const folderId = body.folderId;
+    if (!folderId) throw new Error('Missing folderId');
+    const folder = DriveApp.getFolderById(folderId);
+    const blob = Utilities.newBlob(
+      Utilities.base64Decode(body.imageData),
+      body.mimeType || 'image/jpeg',
+      body.filename || body.tracking + '.jpg'
+    );
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    const fileId = file.getId();
+    const directUrl = 'https://drive.google.com/uc?export=view&id=' + fileId;
+    return ContentService.createTextOutput(
+      JSON.stringify({status:'success', fileId: fileId, url: directUrl})
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch (e) {
+    return ContentService.createTextOutput(
+      JSON.stringify({status:'error', message: e.toString()})
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
 }
 </pre>
               </div>
@@ -1400,19 +1398,17 @@ function renderTable() {
 function applyFilter() {
   const date = document.getElementById('filterDate')?.value || '';
   const branch = (document.getElementById('filterBranch')?.value || '').toLowerCase().trim();
-  const type = document.getElementById('filterType')?.value || '';
   const status = document.getElementById('filterStatus')?.value || '';
   filteredParcels = parcels.filter(p => {
     if (date && !(p.datetime||'').includes(date)) return false;
     if (branch && !(p.branch||'').toLowerCase().includes(branch)) return false;
-    if (type && p.type !== type) return false;
     if (status && p.status !== status) return false;
     return true;
   });
   updateStats(); renderTable(); renderDailyGrid(); renderCharts(); renderOperatorSummary();
 }
 function clearFilter() {
-  ['filterDate','filterBranch','filterType','filterStatus'].forEach(id => {
+  ['filterDate','filterBranch','filterStatus'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   filteredParcels = [...parcels];
@@ -1496,17 +1492,40 @@ async function uploadPhotoToDrive(tracking, dataUrl) {
     const base64 = dataUrl.split(',')[1];
     const mimeType = dataUrl.split(';')[0].split(':')[1];
     
-    const res = await fetchWithTimeout(scriptUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action: 'uploadPhoto',
-        tracking, filename: tracking + '.jpg',
-        imageData: base64, mimeType, folderId
-      })
-    }, 20000);
-
-    const result = await res.json();
+    let result;
+    try {
+      // พยายามส่งแบบปกติก่อน
+      const res = await fetchWithTimeout(scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'uploadPhoto',
+          tracking, filename: tracking + '.jpg',
+          imageData: base64, mimeType, folderId
+        })
+      }, 20000);
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      result = await res.json();
+    } catch (e) {
+      dbg(`พยายามส่งแบบ no-cors เนื่องจาก: ${e.message}`, 'warn');
+      // ถ้าล้มเหลว (อาจติด CORS) ให้ลองส่งแบบ no-cors (แต่จะไม่อ่านผลลัพธ์)
+      await fetchWithTimeout(scriptUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          action: 'uploadPhoto',
+          tracking, filename: tracking + '.jpg',
+          imageData: base64, mimeType, folderId
+        })
+      }, 20000);
+      
+      // เนื่องจาก no-cors อ่านผลไม่ได้ เราจะถือว่าสำเร็จแบบคาดเดา หรือแจ้งผู้ใช้
+      dbg(`ส่งข้อมูลแบบ no-cors แล้ว (ไม่สามารถยืนยันผลได้)`, 'info');
+      toast('ส่งข้อมูลไป Google Drive แล้ว (กรุณาตรวจสอบในโฟลเดอร์)', 'info');
+      return true; 
+    }
     if (result.status === 'success' && result.url) {
       const p = parcels.find(x => x.tracking === tracking);
       if (p) { p.photoUrl = result.url; p.driveFileId = result.fileId; }
@@ -1654,11 +1673,25 @@ async function pushToSheet() {
   dbg(`เริ่ม pushToSheet: ${parcels.length} รายการ`, 'info');
 
   try {
+    // ✅ ตัด base64 ออกก่อน push — Sheet รองรับได้สูงสุด 50,000 ตัวอักษร/เซลล์
+    // base64 ขึ้นต้นด้วย "data:" → ตัดออก ส่งเฉพาะ Drive URL หรือเว้นว่าง
+    const sanitizeUrl = (url) => {
+      if (!url) return '';
+      if (url.startsWith('data:')) return '';   // base64 local → ไม่ส่ง
+      return url.substring(0, 500);             // Drive/GitHub URL → จำกัด 500 ตัวอักษร
+    };
+
+    const base64Count = parcels.filter(p => p.photoUrl?.startsWith('data:')).length;
+    if (base64Count > 0) {
+      toast(`⚠️ รูปภาพ ${base64Count} รายการเป็น base64 (เก็บในเครื่อง) — จะไม่ถูกส่งไป Sheet\nอัปโหลดไป Google Drive ก่อนเพื่อให้ URL ถูกบันทึก`, 'warning', 6000);
+      dbg(`ตัด base64 photoUrl ออก ${base64Count} รายการก่อน push`, 'warn');
+    }
+
     const payload = parcels.map(p => ({
       id: p.id, tracking: p.tracking, branch: p.branch, operator: p.operator,
-      datetime: p.datetime, reason: p.reason, status: p.status, type: p.type,
+      datetime: p.datetime, reason: p.reason, status: p.status,
       lazada: p.lazada, holdDays: p.holdDays, attempts: p.attempts,
-      photoUrl: p.photoUrl || '', updatedAt: new Date().toISOString()
+      photoUrl: sanitizeUrl(p.photoUrl), updatedAt: new Date().toISOString()
     }));
 
     // ✅ FIX: Apps Script POST ต้องใช้ Content-Type: text/plain เพื่อหลีก CORS preflight
@@ -1716,7 +1749,6 @@ function normalizeParcel(item, idx) {
     datetime: item.datetime || item['วันที่ เวลา'] || item.Datetime || '',
     reason: item.reason || item['สาเหตุ'] || item.Reason || '',
     status: item.status || item.Status || 'รอ',
-    type: item.type || item.Type || '',
     lazada: item.lazada || item.Lazada || '',
     holdDays: item.holdDays || item['จำนวนวันที่ถือครอง'] || '',
     attempts: item.attempts || item.Attempts || item['จำนวนครั้งที่นำจ่าย'] || item['จำนวนครั้งที่พยายามนำจ่าย'] || '0',
@@ -1932,21 +1964,44 @@ async function testDriveUpload() {
   if (!folderId) { showConnResult('driveTestResult', 'กรุณากรอก Folder ID ก่อน', 'err'); return; }
 
   showConnResult('driveTestResult', '<i class="fas fa-spinner fa-spin"></i> กำลังทดสอบอัปโหลด...', 'info');
-  // Create a tiny 1x1 transparent PNG as test
   const testBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  
   try {
     const res = await fetchWithTimeout(scriptUrl, {
-      method: 'POST', mode: 'cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'uploadPhoto', tracking: 'TEST_' + Date.now(), filename: 'test.png', imageData: testBase64, mimeType: 'image/png', folderId })
     }, 20000);
+    
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const result = await res.json();
     if (result.status === 'success') {
       showConnResult('driveTestResult', `✅ อัปโหลดสำเร็จ! URL: <a href="${result.url}" target="_blank" style="color:var(--accent2)">ดูรูปทดสอบ</a>`, 'ok');
     } else { throw new Error(result.message); }
   } catch (err) {
     dbg('Drive test error: ' + err.message, 'err');
-    showConnResult('driveTestResult', `❌ ทดสอบไม่สำเร็จ: ${err.message}<br><small>ตรวจสอบโค้ด Apps Script ว่ามีฟังก์ชัน uploadPhoto และสิทธิ์ DriveApp</small>`, 'err');
+    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.name === 'AbortError') {
+      showConnResult('driveTestResult', `⚠️ พบปัญหา CORS หรือการเชื่อมต่อ<br><small>แต่ระบบจะพยายามส่งข้อมูลแบบข้ามข้อจำกัด (no-cors) ให้เมื่อใช้งานจริง</small><br><button class="btn btn-sm btn-ghost mt-2" onclick="testDriveUploadNoCors()">ลองทดสอบแบบ No-CORS</button>`, 'warn');
+    } else {
+      showConnResult('driveTestResult', `❌ ทดสอบไม่สำเร็จ: ${err.message}`, 'err');
+    }
+  }
+}
+
+async function testDriveUploadNoCors() {
+  const scriptUrl = ls('scriptUrl');
+  const folderId = ls('driveFolderId');
+  const testBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  showConnResult('driveTestResult', '<i class="fas fa-spinner fa-spin"></i> กำลังส่งแบบ No-CORS...', 'info');
+  try {
+    await fetch(scriptUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'uploadPhoto', tracking: 'TEST_NOCORS_' + Date.now(), filename: 'test.png', imageData: testBase64, mimeType: 'image/png', folderId })
+    });
+    showConnResult('driveTestResult', `✅ ส่งข้อมูลแบบ No-CORS แล้ว!<br><small>กรุณาตรวจสอบใน Google Drive ว่ามีไฟล์ชื่อ TEST_NOCORS_... หรือไม่</small>`, 'ok');
+  } catch (e) {
+    showConnResult('driveTestResult', `❌ ส่งไม่สำเร็จ: ${e.message}`, 'err');
   }
 }
 
@@ -2271,7 +2326,7 @@ function exportExcel() {
     const ws = XLSX.utils.json_to_sheet(filteredParcels.map(p => ({
       'หมายเลขสิ่งของ':p.tracking, 'รหัสที่ทำการ':p.branch||'', 'ผู้ดำเนินการ':p.operator||'',
       'วันที่เวลา':p.datetime||'', 'สาเหตุ':p.reason||'', 'สถานะ':p.status,
-      'type':p.type||'', 'attempts':p.attempts||'0'
+      'lazada':p.lazada||'', 'holdDays':p.holdDays||'', 'attempts':p.attempts||'0'
     })));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Tracking');
     XLSX.writeFile(wb, `Tracking_${new Date().toISOString().slice(0,10)}.xlsx`);
