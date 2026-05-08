@@ -29,13 +29,10 @@ body {
   background: var(--bg); color: var(--text);
   min-height: 100vh; transition: background 0.3s, color 0.3s;
 }
-/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
-
-/* Layout */
 .layout { display: flex; min-height: 100vh; }
 .sidebar {
   width: 240px; min-height: 100vh; background: var(--surface);
@@ -73,11 +70,7 @@ body {
   font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600;
 }
 .sidebar-footer { padding: 12px; border-top: 1px solid var(--border); }
-
-/* Main */
 .main { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
-
-/* Header */
 .header {
   background: var(--surface); border-bottom: 1px solid var(--border);
   padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
@@ -87,8 +80,6 @@ body {
 .header-title { font-size: 16px; font-weight: 700; }
 .header-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
 .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-
-/* Sync Status */
 .sync-badge {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid;
@@ -101,8 +92,6 @@ body {
 .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .sync-dot.pulse { animation: pulse 1.5s infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
-
-/* Buttons */
 .btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
   border-radius: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer;
@@ -125,11 +114,7 @@ body {
 .btn-lg { padding: 12px 24px; font-size: 14px; }
 .btn-icon { padding: 7px 9px; }
 .btn-full { width: 100%; justify-content: center; }
-
-/* Page content */
 .content { padding: 24px; flex: 1; }
-
-/* Cards */
 .card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; overflow: hidden;
@@ -140,8 +125,6 @@ body {
 }
 .card-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .card-body { padding: 20px; }
-
-/* Stats grid */
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
 .stat-card {
   background: var(--surface); border: 1px solid var(--border);
@@ -164,8 +147,6 @@ body {
   position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
   font-size: 28px; opacity: 0.08;
 }
-
-/* Filter bar */
 .filter-bar {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
@@ -179,8 +160,6 @@ body {
 }
 .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
 .form-control option { background: var(--surface); }
-
-/* Table */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
 thead tr { background: var(--surface2); }
@@ -197,8 +176,6 @@ tbody tr { transition: background 0.15s; }
 tbody tr:hover { background: var(--surface2); }
 tbody tr:last-child td { border-bottom: none; }
 .mono { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; }
-
-/* Status badges */
 .status-pill {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; border: 1px solid; cursor: default;
@@ -206,8 +183,6 @@ tbody tr:last-child td { border-bottom: none; }
 .status-success { background: rgba(16,185,129,0.1); color: var(--success); border-color: rgba(16,185,129,0.25); }
 .status-danger { background: rgba(239,68,68,0.1); color: var(--danger); border-color: rgba(239,68,68,0.25); }
 .status-warning { background: rgba(245,158,11,0.1); color: var(--warning); border-color: rgba(245,158,11,0.25); }
-
-/* Status select */
 .status-select {
   appearance: none; padding: 4px 10px; border-radius: 20px; font-size: 11px;
   font-weight: 700; cursor: pointer; border: 1px solid; background: transparent;
@@ -217,8 +192,6 @@ tbody tr:last-child td { border-bottom: none; }
 .status-select.s-danger { background: rgba(239,68,68,0.1); color: var(--danger); border-color: rgba(239,68,68,0.25); }
 .status-select.s-warning { background: rgba(245,158,11,0.1); color: var(--warning); border-color: rgba(245,158,11,0.25); }
 .status-select option { background: var(--surface); color: var(--text); }
-
-/* ✅ Photos - แก้ไขบัค */
 .photo-thumb {
   width: 48px; height: 48px; border-radius: 8px; object-fit: cover;
   cursor: pointer; border: 2px solid var(--border);
@@ -234,8 +207,6 @@ tbody tr:last-child td { border-bottom: none; }
   color: var(--text3); cursor: pointer; transition: all 0.2s; font-size: 14px;
 }
 .photo-upload-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.05); }
-
-/* Daily cards */
 .daily-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
 .daily-card {
   background: var(--surface2); border: 1px solid var(--border);
@@ -256,14 +227,10 @@ tbody tr:last-child td { border-bottom: none; }
   height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
   border-radius: 2px; transition: width 0.5s;
 }
-
-/* Charts */
 .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
 .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
 .chart-label { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
 .chart-wrap { height: 220px; position: relative; }
-
-/* Settings */
 .settings-section {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 24px; margin-bottom: 16px;
@@ -294,8 +261,6 @@ tbody tr:last-child td { border-bottom: none; }
   padding: 0 12px; background: none; border: none; color: var(--text3); cursor: pointer;
 }
 .password-toggle:hover { color: var(--text); }
-
-/* Connection result */
 .conn-result {
   padding: 12px 16px; border-radius: 8px; font-size: 12.5px; margin-top: 12px;
   display: flex; align-items: flex-start; gap: 8px;
@@ -304,8 +269,6 @@ tbody tr:last-child td { border-bottom: none; }
 .conn-err { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); }
 .conn-warn { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: var(--warning); }
 .conn-info { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); color: var(--accent); }
-
-/* Upload zone */
 .drop-zone {
   border: 2px dashed var(--border); border-radius: 12px;
   padding: 48px 24px; text-align: center; cursor: pointer; transition: all 0.2s;
@@ -316,8 +279,6 @@ tbody tr:last-child td { border-bottom: none; }
 .drop-icon { font-size: 40px; color: var(--text3); margin-bottom: 12px; display: block; }
 .drop-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
 .drop-sub { font-size: 12.5px; color: var(--text3); }
-
-/* ✅ Photo Modal - แก้ไขบัค */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.85);
   z-index: 1000; display: flex; align-items: center; justify-content: center;
@@ -341,8 +302,6 @@ tbody tr:last-child td { border-bottom: none; }
   color: rgba(255,255,255,0.8); font-family: 'IBM Plex Mono', monospace;
   font-size: 13px; margin-top: 14px; min-height: 36px;
 }
-
-/* Toast */
 .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
 .toast {
   display: flex; align-items: center; gap: 10px; padding: 12px 18px;
@@ -360,8 +319,6 @@ body.light .toast-success { background: #d1fae5; color: #065f46; border-color: #
 body.light .toast-error { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
 body.light .toast-warning { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-
-/* Loading overlay */
 .loading-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.6);
   backdrop-filter: blur(4px); z-index: 999;
@@ -384,8 +341,6 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
 .loading-progress { width: 200px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
 .loading-progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); animation: progress 2s ease-in-out infinite; }
 @keyframes progress { 0%{width:0} 50%{width:70%} 100%{width:100%} }
-
-/* Tabs for settings */
 .tab-bar { display: flex; gap: 4px; padding: 12px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .tab-btn {
   padding: 6px 14px; font-size: 12.5px; font-weight: 600; border-radius: 6px; cursor: pointer;
@@ -393,8 +348,6 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
 }
 .tab-btn:hover { background: var(--border); color: var(--text); }
 .tab-btn.active { background: var(--accent); color: #fff; }
-
-/* Drive status box */
 .drive-scope-list { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
 .scope-item {
   display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px;
@@ -403,8 +356,6 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
 .scope-ok { color: var(--success); }
 .scope-warn { color: var(--warning); }
 .scope-err { color: var(--danger); }
-
-/* Debug panel */
 .debug-panel {
   background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 8px;
   padding: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
@@ -413,12 +364,8 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
 .debug-panel .log-err { color: #f87171; }
 .debug-panel .log-warn { color: #fbbf24; }
 .debug-panel .log-info { color: #60a5fa; }
-
-/* Page hidden */
 .page { display: none; }
 .page.active { display: block; }
-
-/* Responsive */
 @media (max-width: 1200px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .daily-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } .filter-grid { grid-template-columns: repeat(2, 1fr); } .form-row { grid-template-columns: 1fr; } }
 @media (max-width: 768px) {
@@ -431,13 +378,9 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
   .content { padding: 16px; }
 }
 @media (max-width: 480px) { .stats-grid { grid-template-columns: 1fr; } .filter-grid { grid-template-columns: 1fr; } }
-
-/* Empty state */
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
 .empty-state i { font-size: 48px; opacity: 0.3; display: block; margin-bottom: 16px; }
 .empty-state p { font-size: 14px; }
-
-/* Operator Summary Page */
 .op-search-bar {
   display: flex; align-items: center; gap: 10px;
   background: var(--surface2); border: 1px solid var(--border);
@@ -539,8 +482,6 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
   padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
 }
 @media (max-width: 700px) { .op-cards-grid { grid-template-columns: 1fr; } }
-
-/* Misc */
 .text-mono { font-family: 'IBM Plex Mono', monospace; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
 .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
@@ -564,7 +505,7 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
   </div>
 </div>
 
-<!-- ✅ Photo Modal - แก้ไขบัค -->
+<!-- Photo Modal -->
 <div class="modal-overlay hidden" id="photoModal" onclick="closePhotoModal(event)">
   <div class="photo-modal-content" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closePhotoModal()"><i class="fas fa-times"></i></button>
@@ -1015,7 +956,6 @@ function renderTable() {
     const photoSrc = photos[p.tracking] || p.photoUrl || '';
     
     // ✅ แก้ไขบัค: 1) escape URL อย่างปลอดภัย 2) onerror แสดงปุ่มอัปโหลดแทน
-    const safeSrc = JSON.stringify(photoSrc).slice(1, -1);
     const photoCell = photoSrc
       ? `<img class="photo-thumb" src="${photoSrc}" onclick="openPhoto('${p.tracking}', ${JSON.stringify(photoSrc)})" onerror="this.onerror=null;this.style.opacity='0.5';this.title='โหลดรูปไม่สำเร็จ';this.parentElement.innerHTML='<label class=\\'photo-upload-btn\\' title=\\'อัปโหลดรูปภาพ\\'><i class=\\'fas fa-camera\\'></i><input type=\\'file\\' accept=\\'image/*\\' style=\\'display:none\\' onchange=\\'uploadLocalPhoto(this,\\'${p.id}\\',\\'${p.tracking}\\')\\'></label>'">`
       : `<label class="photo-upload-btn" title="อัปโหลดรูปภาพ"><i class="fas fa-camera"></i><input type="file" accept="image/*" style="display:none" onchange="uploadLocalPhoto(this,'${p.id}','${p.tracking}')"></label>`;
@@ -1196,11 +1136,11 @@ async function pushToSheet() {
   if (!parcels.length) { toast('ไม่มีข้อมูล', 'info'); return; } if (isBusy) { toast('กำลังทำงานอยู่ รอสักครู่', 'info'); return; }
   isBusy = true; setSyncStatus('loading', 'กำลังอัปโหลด...'); showLoading('กำลังส่งข้อมูลไป Google Sheet...', `ส่ง ${parcels.length} รายการ`); dbg(`เริ่ม pushToSheet: ${parcels.length} รายการ`, 'info');
   try {
-    const sanitizeUrl = (url) => { if (!url) return ''; if (url.startsWith('data:')) return ''; return url.substring(0, 500); };
-    const base64Count = parcels.filter(p => p.photoUrl?.startsWith('data:')).length;
+    const sanitizeUrl = (url) => { if (!url) return ''; if (url.startsWith('')) return ''; return url.substring(0, 500); };
+    const base64Count = parcels.filter(p => p.photoUrl?.startsWith('')).length;
     if (base64Count > 0) { toast(`⚠️ รูปภาพ ${base64Count} รายการเป็น base64 (เก็บในเครื่อง) — จะไม่ถูกส่งไป Sheet`, 'warning', 6000); dbg(`ตัด base64 photoUrl ออก ${base64Count} รายการก่อน push`, 'warn'); }
     const payload = parcels.map(p => ({ id: p.id, tracking: p.tracking, branch: p.branch, operator: p.operator, datetime: p.datetime, reason: p.reason, status: p.status, lazada: p.lazada, holdDays: p.holdDays, attempts: p.attempts, photoUrl: sanitizeUrl(p.photoUrl), updatedAt: new Date().toISOString() }));
-    const res = await fetchWithTimeout(url, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveBatch', data: payload, timestamp: new Date().toISOString() }) }, 60000);
+    const res = await fetchWithTimeout(url, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveBatch',  payload, timestamp: new Date().toISOString() }) }, 60000);
     dbg(`pushToSheet response: ${res.status}`, 'info'); if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text(); let result; try { result = JSON.parse(text); } catch(e) { throw new Error('Response ไม่ใช่ JSON'); }
     if (result.status !== 'success') throw new Error(result.message || 'Push ล้มเหลว');
@@ -1228,7 +1168,7 @@ function normalizeParcel(item, idx) {
     lazada: item.lazada || item.Lazada || '',
     holdDays: item.holdDays || item['จำนวนวันที่ถือครอง'] || '',
     attempts: item.attempts || item.Attempts || item['จำนวนครั้งที่นำจ่าย'] || item['จำนวนครั้งที่พยายามนำจ่าย'] || '0',
-    photoUrl: item.photoUrl || item.photo || item.Photo || '',
+    photoUrl: item.photoUrl || item.PhotoUrl || item.photo || item.Photo || item['รูปภาพ'] || item['รูป'] || '',
     driveFileId: item.driveFileId || '',
     fallbackUrl: item.fallbackUrl || ''
   };
@@ -1275,7 +1215,7 @@ function ls(key) { return localStorage.getItem(key) || ''; }
 function lsSet(key, val) { localStorage.setItem(key, val); }
 function saveLocal() {
   try {
-    const lightParcels = parcels.map(p => ({ ...p, photoUrl: p.photoUrl?.startsWith('data:') ? '' : p.photoUrl }));
+    const lightParcels = parcels.map(p => ({ ...p, photoUrl: p.photoUrl?.startsWith('') ? '' : p.photoUrl }));
     lsSet('parcels_v6', JSON.stringify(lightParcels));
     const photosToSave = {}; Object.keys(photos).forEach(k => { if (photos[k]) photosToSave[k] = photos[k]; });
     try { lsSet('photos_v6', JSON.stringify(photosToSave)); } catch(_) { dbg('Photos too large for localStorage', 'warn'); }
@@ -1446,7 +1386,7 @@ function renderOperatorSummary() {
     const initials = op.name === 'ไม่ระบุ' ? '?' : op.name.substring(0,2).toUpperCase();
     const gradients = ['linear-gradient(135deg,#3b82f6,#06b6d4)','linear-gradient(135deg,#8b5cf6,#6366f1)','linear-gradient(135deg,#10b981,#06b6d4)','linear-gradient(135deg,#f59e0b,#ef4444)','linear-gradient(135deg,#ec4899,#8b5cf6)','linear-gradient(135deg,#14b8a6,#3b82f6)'];
     const grad = gradients[idx % gradients.length];
-    const itemsHtml = op.items.map(p => { const sc = p.status==='สำเร็จ'?'status-success':p.status==='ไม่สำเร็จ'?'status-danger':'status-warning'; const ic = p.status==='สำเร็จ'?'✅':p.status==='ไม่สำเร็จ'?'❌':'⏳'; return `<tr class="op-row" data-tracking="${(p.tracking||'').toLowerCase()}" data-branch="${(p.branch||'').toLowerCase()}" data-reason="${(p.reason||'').toLowerCase()}" data-status="${(p.status||'').toLowerCase()}" data-attempts="${(p.attempts||'').toLowerCase()}"><td><span class="mono" style="font-size:11px">${p.tracking||'-'}</span></td><td>${p.branch||'-'}</td><td style="font-size:11px;color:var(--text3)">${p.datetime||'-'}</td><td><span class="truncate" style="max-width:120px;display:block" title="${p.reason||''}">${p.reason||'-'}</span></td><td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--accent2)">${p.attempts||'0'}</td><td><span class="status-pill ${sc}">${ic} ${p.status}</span></td></tr>`; }).join('');
+    const itemsHtml = op.items.map(p => { const sc = p.status==='สำเร็จ'?'status-success':p.status==='ไม่สำเร็จ'?'status-danger':'status-warning'; const ic = p.status==='สำเร็จ'?'✅':p.status==='ไม่สำเร็จ'?'❌':''; return `<tr class="op-row" data-tracking="${(p.tracking||'').toLowerCase()}" data-branch="${(p.branch||'').toLowerCase()}" data-reason="${(p.reason||'').toLowerCase()}" data-status="${(p.status||'').toLowerCase()}" data-attempts="${(p.attempts||'').toLowerCase()}"><td><span class="mono" style="font-size:11px">${p.tracking||'-'}</span></td><td>${p.branch||'-'}</td><td style="font-size:11px;color:var(--text3)">${p.datetime||'-'}</td><td><span class="truncate" style="max-width:120px;display:block" title="${p.reason||''}">${p.reason||'-'}</span></td><td style="text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--accent2)">${p.attempts||'0'}</td><td><span class="status-pill ${sc}">${ic} ${p.status}</span></td></tr>`; }).join('');
     return `<div class="op-card" id="op-card-${idx}"><div class="op-card-header" onclick="toggleOpCard(${idx})"><div class="op-avatar" style="background:${grad}">${initials}</div><div><div class="op-name">${op.name}</div><div class="op-total">${op.total} รายการ · อัตรา ${rate}%</div></div><i class="fas fa-chevron-down op-chevron"></i></div><div class="op-stats-row"><div class="op-stat"><div class="op-stat-val" style="color:var(--success)">${op.success}</div><div class="op-stat-lbl">✅ สำเร็จ</div></div><div class="op-stat"><div class="op-stat-val" style="color:var(--danger)">${op.failed}</div><div class="op-stat-lbl">❌ ไม่สำเร็จ</div></div><div class="op-stat"><div class="op-stat-val" style="color:var(--warning)">${op.pending}</div><div class="op-stat-lbl">⏳ รอ</div></div></div><div class="op-rate-bar"><div class="op-rate-label"><span style="color:${rateColor};font-weight:700">${rate}% สำเร็จ</span><span>${op.total} รายการทั้งหมด</span></div><div class="op-rate-track"><div class="op-rate-fill" style="width:${rate}%;background:${rateColor}"></div></div></div><div class="op-detail" id="op-detail-${idx}"><div class="op-detail-search"><i class="fas fa-search" style="color:var(--text3);font-size:12px"></i><input class="op-detail-search-input" placeholder="ค้นหาใน ${op.name}..." oninput="filterOpDetail(${idx}, this.value)"></div><div style="overflow-x:auto;max-height:320px;overflow-y:auto"><table class="op-detail-table" id="op-table-${idx}"><thead><tr><th>หมายเลขสิ่งของ</th><th>รหัส ปณ.</th><th>วันที่/เวลา</th><th>สาเหตุ</th><th style="text-align:center">attempts</th><th>สถานะ</th></tr></thead><tbody id="op-tbody-${idx}">${itemsHtml}</tbody></table></div><div class="op-detail-footer" id="op-footer-${idx}">แสดง ${op.items.length} รายการ</div></div></div>`;
   }).join('');
 }
