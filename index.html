@@ -630,6 +630,7 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
   font-size: 11px; font-weight: 700;
 }
 </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -942,7 +943,7 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
             </div>
             <div class="form-group" style="margin-bottom:12px">
               <label class="form-label">Web App URL <span style="color:var(--danger)">*</span></label>
-              <input type="url" id="scriptUrl" class="form-control" placeholder="https://script.google.com/macros/s/AKfycb.../exec">
+              <input type="url" id="scriptUrl" class="form-control" placeholder="https://script.google.com/macros/s/AKfycbzCbTsogv6C_9R8ZWwi0KpBS_BtM3yheI38Zx5agYZkvdV8AIl3zps6vhh4vXN9ysQ/exec">
               <div class="form-hint">ต้องขึ้นต้นด้วย https://script.google.com/macros/s/ และลงท้ายด้วย /exec</div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -994,7 +995,7 @@ function doPost(e) {
             <hr class="divider">
             <div class="form-group" style="margin-bottom:12px">
               <label class="form-label">Google Drive Folder ID (สำหรับเก็บรูปภาพ)</label>
-              <input type="text" id="driveFolderId" class="form-control" placeholder="เช่น 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+              <input type="text" id="driveFolderId" class="form-control" placeholder="10LZmtz106Bi4dp8tGjsWD0KXKob7ryW1">
               <div class="form-hint">เปิด Google Drive Folder → URL จะมี /folders/FOLDER_ID — คัดลอกมาใส่ที่นี่</div>
             </div>
             <div style="display:flex;gap:8px">
@@ -2550,6 +2551,23 @@ function setupResponsive() {
 // INIT
 // ========================================================
 document.addEventListener('DOMContentLoaded', async () => {
+  // ========================================================
+  // EMBEDDED CONFIG — ค่าที่ฝังไว้ในระบบ
+  // ========================================================
+  (function() {
+    // Google Apps Script URL (ถ้ายังไม่มีค่าใน localStorage)
+    if (!localStorage.getItem('scriptUrl')) {
+      localStorage.setItem('scriptUrl', 'https://script.google.com/macros/s/AKfycbzCbTsogv6C_9R8ZWwi0KpBS_BtM3yheI38Zx5agYZkvdV8AIl3zps6vhh4vXN9ysQ/exec');
+      console.log('[EMBEDDED] Script URL ถูกฝังไว้แล้ว');
+    }
+    // Google Drive Folder ID (ถ้ายังไม่มีค่าใน localStorage)
+    if (!localStorage.getItem('driveFolderId')) {
+      localStorage.setItem('driveFolderId', '10LZmtz106Bi4dp8tGjsWD0KXKob7ryW1');
+      console.log('[EMBEDDED] Drive Folder ID ถูกฝังไว้แล้ว');
+    }
+  })();
+  // ========================================================
+
   // Theme
   const theme = ls('theme') || 'dark';
   applyTheme(theme);
