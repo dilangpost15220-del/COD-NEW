@@ -684,6 +684,9 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
       <a class="nav-item" onclick="showPage('operators')" id="nav-operators">
         <span class="icon"><i class="fas fa-users-cog"></i></span>สรุปผู้ดำเนินการ
       </a>
+      <a class="nav-item" onclick="showPage('postcode')" id="nav-postcode">
+        <span class="icon"><i class="fas fa-map-location-dot"></i></span>สรุปรายไปรษณีย์
+      </a>
       <a class="nav-item" onclick="showPage('settings')" id="nav-settings" style="display:none">
         <span class="icon"><i class="fas fa-cog"></i></span>ตั้งค่าระบบ
       </a>
@@ -926,6 +929,43 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
         </div>
         <div class="op-cards-grid" id="opCardsGrid">
           <div class="empty-state" style="grid-column:1/-1"><i class="fas fa-users"></i><p>ยังไม่มีข้อมูล</p></div>
+        </div>
+      </div>
+
+      <!-- === POSTAL CODE SUMMARY === -->
+      <div class="page" id="page-postcode">
+        <div class="op-summary-header">
+          <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px">
+            <i class="fas fa-map-location-dot" style="color:var(--accent)"></i> สรุปรายไปรษณีย์ (ปณ.)
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="op-count-badge"><i class="fas fa-map-pin"></i> <span id="pcTotalCount">0</span> รหัส</span>
+            <button class="btn btn-success btn-sm" onclick="exportPostcodeExcel()"><i class="fas fa-download"></i> Export Excel</button>
+          </div>
+        </div>
+        <div class="op-search-bar">
+          <i class="fas fa-search"></i>
+          <input class="op-search-input" id="pcSearchInput" placeholder="คนหารหัส ปณ. หรือชื่อตำบล..." oninput="renderPostcodeSummary()">
+          <button class="op-search-clear" onclick="document.getElementById('pcSearchInput').value='';renderPostcodeSummary()" title="ล้าง"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="table-wrap">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead style="background:var(--surface2)">
+              <tr>
+                <th style="padding:12px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border)">รหัส ปณ.</th>
+                <th style="padding:12px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);text-align:left;border-bottom:1px solid var(--border)">ชื่อตำบล</th>
+                <th style="padding:12px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);text-align:center;border-bottom:1px solid var(--border)">งานทั้งหมด</th>
+                <th style="padding:12px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);text-align:center;border-bottom:1px solid var(--border)">มีรูป</th>
+                <th style="padding:12px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);text-align:center;border-bottom:1px solid var(--border)">ไม่มีรูป</th>
+                <th style="padding:12px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);text-align:center;border-bottom:1px solid var(--border)">ลงทะเบียน %</th>
+              </tr>
+            </thead>
+            <tbody id="pcTableBody">
+              <tr>
+                <td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">ยังไม่มีข้อมูล</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -1204,6 +1244,7 @@ function showPage(page) {
     import: ['นำเข้าข้อมูล', 'Import จาก Excel / CSV / Google Sheet'],
     analytics: ['วิเคราะห์ข้อมูล', 'กราฟและสถิติเชิงลึก'],
     operators: ['สรุปผู้ดำเนินการ', 'รายละเอียดแยกตามพนักงานแต่ละคน'],
+    postcode: ['สรุปรายไปรษณีย์ (ปณ.)', 'รายละเอียดแยกรหัสไปรษณีย์'],
     settings: ['การตั้งค่าระบบ', 'เชื่อมต่อ Google Sheet / Drive / GitHub'],
   };
   const t = titles[page] || [page, ''];
@@ -1218,6 +1259,7 @@ function showPage(page) {
   if (page === 'dashboard' || page === 'analytics') renderCharts();
   if (page === 'records') renderTable();
   if (page === 'operators') renderOperatorSummary();
+  if (page === 'postcode') renderPostcodeSummary();
 
   // Close sidebar on mobile
   if (window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
@@ -2592,6 +2634,83 @@ document.addEventListener('DOMContentLoaded', async () => {
   toast('ระบบพร้อมใช้งาน ✅', 'success');
   dbg('App initialized', 'info');
 });
+
+// ========================================================
+// POSTAL CODE SUMMARY
+// ========================================================
+function buildPostcodeData() {
+  const postcodes = {};
+  filteredParcels.forEach(p => {
+    const code = (p.branch || 'ไม่ระบุ').trim();
+    if (!postcodes[code]) {
+      postcodes[code] = { code, name: '', total: 0, withPhoto: 0, noPhoto: 0, items: [] };
+    }
+    postcodes[code].total++;
+    if (p.photoUrl || p.driveFileId) {
+      postcodes[code].withPhoto++;
+    } else {
+      postcodes[code].noPhoto++;
+    }
+    postcodes[code].items.push(p);
+  });
+  return Object.values(postcodes).sort((a, b) => b.total - a.total);
+}
+
+function renderPostcodeSummary() {
+  const q = (document.getElementById('pcSearchInput')?.value || '').toLowerCase().trim();
+  let data = buildPostcodeData();
+  if (q) {
+    data = data.filter(pc => 
+      pc.code.toLowerCase().includes(q) || 
+      (pc.name && pc.name.toLowerCase().includes(q))
+    );
+  }
+  
+  const tbody = document.getElementById('pcTableBody');
+  document.getElementById('pcTotalCount').textContent = data.length;
+  
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text3)">' + 
+      (q ? 'ไม่พบรหัสไปรษณีย์ที่ค้นหา' : 'ยังไม่มีข้อมูล') + '</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = data.map(pc => {
+    const percent = pc.total ? Math.round(pc.withPhoto / pc.total * 100) : 0;
+    const percentColor = percent >= 80 ? 'var(--success)' : percent >= 50 ? 'var(--warning)' : 'var(--danger)';
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:12px 14px;font-size:12.5px;color:var(--text);font-weight:600">${pc.code}</td>
+      <td style="padding:12px 14px;font-size:12.5px;color:var(--text)">${pc.name || '-'}</td>
+      <td style="padding:12px 14px;font-size:12.5px;color:var(--text);text-align:center;font-weight:600">${pc.total}</td>
+      <td style="padding:12px 14px;font-size:12.5px;color:var(--success);text-align:center;font-weight:600">${pc.withPhoto}</td>
+      <td style="padding:12px 14px;font-size:12.5px;color:var(--danger);text-align:center;font-weight:600">${pc.noPhoto}</td>
+      <td style="padding:12px 14px;font-size:12.5px;color:${percentColor};text-align:center;font-weight:600">${percent}%</td>
+    </tr>`;
+  }).join('');
+}
+
+function exportPostcodeExcel() {
+  try {
+    const data = buildPostcodeData();
+    const rows = data.map(pc => ({
+      'รหัส ปณ.': pc.code,
+      'ชื่อตำบล': pc.name || '-',
+      'งานทั้งหมด': pc.total,
+      'มีรูป': pc.withPhoto,
+      'ไม่มีรูป': pc.noPhoto,
+      'ลงทะเบียน %': pc.total ? Math.round(pc.withPhoto / pc.total * 100) : 0,
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Postcode Summary');
+    XLSX.writeFile(wb, `Postcode_Summary_${new Date().toISOString().slice(0,10)}.xlsx`);
+    toast('Export Excel สำเร็จ', 'success');
+  } catch (e) {
+    dbg('Error exporting postcode excel: ' + e.message, 'error');
+    toast('Export Excel ไม่สำเร็จ', 'error');
+  }
+}
+
 </script>
 </body>
 </html>
