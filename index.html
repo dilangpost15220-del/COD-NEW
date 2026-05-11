@@ -775,7 +775,9 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="applyFilter()"><i class="fas fa-search"></i> ค้นหา</button>
           <button class="btn btn-ghost" onclick="clearFilter()"><i class="fas fa-times"></i> ล้างตัวกรอง</button>
-
+          <button class="btn btn-ghost btn-sm" onclick="confirmClearAll()" style="margin-left:auto;color:var(--danger);border-color:rgba(239,68,68,0.2)">
+            <i class="fas fa-trash-alt"></i> ล้างข้อมูลทั้งหมด
+          </button>
         </div>
       </div>
 
@@ -1113,7 +1115,7 @@ if (body.action === 'uploadPhoto') {
               <div class="settings-icon yellow"><i class="fas fa-database"></i></div>
               <div>
                 <div class="settings-title">④ จัดการข้อมูลในเครื่อง (LocalStorage)</div>
-                <div class="settings-sub">สำรอง / กู้คืน ข้อมูล</div>
+                <div class="settings-sub">สำรอง / กู้คืน / ล้างข้อมูลทั้งหมด</div>
               </div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1121,6 +1123,8 @@ if (body.action === 'uploadPhoto') {
               <button class="btn btn-primary" onclick="document.getElementById('restoreFile').click()"><i class="fas fa-upload"></i> กู้คืนข้อมูล</button>
             </div>
             <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreData(event)">
+            <hr class="divider">
+            <button class="btn btn-danger btn-full" onclick="confirmClearAll()"><i class="fas fa-trash-alt"></i> ล้างข้อมูลทั้งหมดในเครื่อง (ไม่สามารถกู้คืนได้)</button>
           </div>
         </div>
 
@@ -1486,7 +1490,14 @@ function deleteParcel(id) {
   autoSave();
   toast('ลบรายการแล้ว', 'success');
 }
-
+function confirmClearAll() {
+  if (!parcels.length) { toast('ไม่มีข้อมูล', 'warning'); return; }
+  if (!confirm(`⚠️ ล้างข้อมูลทั้งหมด ${parcels.length} รายการ? ไม่สามารถกู้คืนได้`)) return;
+  parcels = []; filteredParcels = []; photos = {};
+  updateStats(); renderTable(); renderDailyGrid(); renderCharts();
+  autoSave();
+  toast('ล้างข้อมูลทั้งหมดแล้ว', 'success');
+}
 
 // ========================================================
 // PHOTO - LOCAL UPLOAD
