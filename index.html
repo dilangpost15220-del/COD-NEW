@@ -775,9 +775,7 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="applyFilter()"><i class="fas fa-search"></i> ค้นหา</button>
           <button class="btn btn-ghost" onclick="clearFilter()"><i class="fas fa-times"></i> ล้างตัวกรอง</button>
-          <button class="btn btn-ghost btn-sm" onclick="confirmClearAll()" style="margin-left:auto;color:var(--danger);border-color:rgba(239,68,68,0.2)">
-            <i class="fas fa-trash-alt"></i> ล้างข้อมูลทั้งหมด
-          </button>
+
         </div>
       </div>
 
@@ -861,13 +859,14 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
                   <th>รหัส ปณ.</th>
                   <th>ผู้ดำเนินการ</th>
                   <th>วันที่/เวลา</th>
+                  <th style="text-align:center">จำนวนวันที่ถือครอง<br><span style="font-size:9px;color:var(--text2);font-weight:500">นับจากวันที่ปลายทาง</span></th>
                   <th>สาเหตุ</th>
                   <th style="text-align:center">รูปภาพ</th>
                   <th style="text-align:center">สถานะ / จัดการ</th>
                 </tr>
               </thead>
               <tbody id="recordsBody">
-                <tr><td colspan="8" class="empty-state"><i class="fas fa-inbox"></i><p>ยังไม่มีข้อมูล</p></td></tr>
+                <tr><td colspan="9" class="empty-state"><i class="fas fa-inbox"></i><p>ยังไม่มีข้อมูล</p></td></tr>
               </tbody>
             </table>
           </div>
@@ -1114,7 +1113,7 @@ if (body.action === 'uploadPhoto') {
               <div class="settings-icon yellow"><i class="fas fa-database"></i></div>
               <div>
                 <div class="settings-title">④ จัดการข้อมูลในเครื่อง (LocalStorage)</div>
-                <div class="settings-sub">สำรอง / กู้คืน / ล้างข้อมูลทั้งหมด</div>
+                <div class="settings-sub">สำรอง / กู้คืน ข้อมูล</div>
               </div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1122,8 +1121,6 @@ if (body.action === 'uploadPhoto') {
               <button class="btn btn-primary" onclick="document.getElementById('restoreFile').click()"><i class="fas fa-upload"></i> กู้คืนข้อมูล</button>
             </div>
             <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreData(event)">
-            <hr class="divider">
-            <button class="btn btn-danger btn-full" onclick="confirmClearAll()"><i class="fas fa-trash-alt"></i> ล้างข้อมูลทั้งหมดในเครื่อง (ไม่สามารถกู้คืนได้)</button>
           </div>
         </div>
 
@@ -1400,7 +1397,7 @@ function renderTable() {
   const tbody = document.getElementById('recordsBody');
   if (!tbody) return;
   if (!filteredParcels.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-inbox"></i><p>ยังไม่มีข้อมูล</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="fas fa-inbox"></i><p>ยังไม่มีข้อมูล</p></div></td></tr>';
     return;
   }
   tbody.innerHTML = filteredParcels.map((p, i) => {
@@ -1425,6 +1422,7 @@ function renderTable() {
       <td>${p.branch || '-'}</td>
       <td style="color:var(--accent2)">${p.operator || '-'}</td>
       <td style="font-size:11.5px;color:var(--text3)">${p.datetimeFmt || formatDatetime(p.datetime) || '-'}</td>
+      <td style="text-align:center"><span class="mono">${p.holdDays || '-'}</span></td>
       <td><div class="truncate" title="${p.reason||''}">${p.reason || '-'}</div></td>
       <td style="text-align:center">${photoCell}</td>
       <td style="text-align:center">
@@ -1488,14 +1486,7 @@ function deleteParcel(id) {
   autoSave();
   toast('ลบรายการแล้ว', 'success');
 }
-function confirmClearAll() {
-  if (!parcels.length) { toast('ไม่มีข้อมูล', 'warning'); return; }
-  if (!confirm(`⚠️ ล้างข้อมูลทั้งหมด ${parcels.length} รายการ? ไม่สามารถกู้คืนได้`)) return;
-  parcels = []; filteredParcels = []; photos = {};
-  updateStats(); renderTable(); renderDailyGrid(); renderCharts();
-  autoSave();
-  toast('ล้างข้อมูลทั้งหมดแล้ว', 'success');
-}
+
 
 // ========================================================
 // PHOTO - LOCAL UPLOAD
@@ -1953,11 +1944,13 @@ function normalizeParcel(item, idx) {
     )?.[1] || '';
 
   // ---- หา holdDays ----
-  // ชื่อจริง: 'จำนวนวันที่ถือครอง (นับจากวันที่รับฝาก)'
+  // ชื่อจริง: 'จำนวนวันที่ถือครอง (นับจากวันที่ปลายทาง)'
+  // ให้ความสำคัญกับคอลัมน์ปลายทางก่อน หากไม่มีจึง fallback ไปยังชื่อคอลัมน์อื่น
   const rawHoldDays =
+    item.holdDaysDestination ||
+    item['จำนวนวันที่ถือครอง (นับจากวันที่ปลายทาง)'] ||
     item.holdDays ||
     item['จำนวนวันที่ถือครอง (นับจากวันที่รับฝาก)'] ||
-    item['จำนวนวันที่ถือครอง (นับจากวันที่ปลายทาง)'] ||
     item['จำนวนวันที่ถือครอง'] || '';
 
   // ---- หา attempts ----
@@ -2530,8 +2523,10 @@ function exportExcel() {
   try {
     const ws = XLSX.utils.json_to_sheet(filteredParcels.map(p => ({
       'หมายเลขสิ่งของ':p.tracking, 'รหัสที่ทำการ':p.branch||'', 'ผู้ดำเนินการ':p.operator||'',
-      'วันที่เวลา': p.datetimeFmt || formatDatetime(p.datetime) || '', 'สาเหตุ':p.reason||'', 'สถานะ':p.status,
-      'lazada':p.lazada||'', 'holdDays':p.holdDays||'', 'attempts':p.attempts||'0'
+      'วันที่เวลา': p.datetimeFmt || formatDatetime(p.datetime) || '',
+      'จำนวนวันที่ถือครอง (นับจากวันที่ปลายทาง)': p.holdDays || '',
+      'สาเหตุ':p.reason||'', 'สถานะ':p.status,
+      'lazada':p.lazada||'', 'attempts':p.attempts||'0'
     })));
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Tracking');
     XLSX.writeFile(wb, `Tracking_${new Date().toISOString().slice(0,10)}.xlsx`);
