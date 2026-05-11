@@ -830,7 +830,7 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
             <div class="chart-wrap"><canvas id="reasonChart"></canvas></div>
           </div>
           <div class="chart-card" style="grid-column:1/-1">
-            <div class="chart-label"><i class="fas fa-users" style="color:var(--success)"></i>ผลงานรายพนักงาน</div>
+            <div class="chart-label"><i class="fas fa-map-location-dot" style="color:var(--success)"></i>ผลงานราย ปณ.</div>
             <div class="chart-wrap" style="height:240px"><canvas id="operatorChart"></canvas></div>
           </div>
         </div>
@@ -2280,7 +2280,7 @@ function initCharts() {
   const c2 = mk('reasonChart');
   if (c2) charts.reason = new Chart(c2, { type:'bar', data:{ labels:[], datasets:[{ label:'จำนวน', data:[], backgroundColor:'rgba(167,139,250,0.8)', borderRadius:5, borderSkipped:false }] }, options:{ ...base, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:co.text,font:tickFont},grid:{display:false}}, y:{ticks:{color:co.text,font:tickFont},grid:{color:co.grid}} } } });
 
-  // Operator Bar (horizontal)
+  // Branch/Postcode Bar (horizontal)
   const c3 = mk('operatorChart');
   if (c3) charts.operator = new Chart(c3, { type:'bar', data:{ labels:[], datasets:[{ label:'รายการ', data:[], backgroundColor:'rgba(59,130,246,0.8)', borderRadius:5, borderSkipped:false }] }, options:{ ...base, indexAxis:'y', plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:co.text,font:tickFont},grid:{color:co.grid}}, y:{ticks:{color:co.text,font:tickFont},grid:{display:false}} } } });
 
@@ -2318,17 +2318,17 @@ function renderCharts() {
   const rEntries = Object.entries(reasons).sort((a,b)=>b[1]-a[1]).slice(0,8);
   if (charts.reason) { charts.reason.data.labels = rEntries.map(e=>e[0]); charts.reason.data.datasets[0].data = rEntries.map(e=>e[1]); charts.reason.update('none'); }
 
-  // Operators
-  const ops = {};
-  filteredParcels.forEach(p => { if(p.operator) ops[p.operator]=(ops[p.operator]||0)+1; });
-  const opEntries = Object.entries(ops).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  if (charts.operator) { charts.operator.data.labels = opEntries.map(e=>e[0]); charts.operator.data.datasets[0].data = opEntries.map(e=>e[1]); charts.operator.update('none'); }
-
-  // Branches (analytics)
+  // Branches/Postcodes (now shown in main operator chart)
   const branches = {};
   filteredParcels.forEach(p => { if(p.branch) branches[p.branch]=(branches[p.branch]||0)+1; });
   const brEntries = Object.entries(branches).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  if (charts.branch) { charts.branch.data.labels = brEntries.map(e=>e[0]); charts.branch.data.datasets[0].data = brEntries.map(e=>e[1]); charts.branch.update('none'); }
+  if (charts.operator) { charts.operator.data.labels = brEntries.map(e=>e[0]); charts.operator.data.datasets[0].data = brEntries.map(e=>e[1]); charts.operator.update('none'); }
+
+  // Operators (analytics - kept for reference)
+  const ops = {};
+  filteredParcels.forEach(p => { if(p.operator) ops[p.operator]=(ops[p.operator]||0)+1; });
+  const opEntries = Object.entries(ops).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  if (charts.branch) { charts.branch.data.labels = opEntries.map(e=>e[0]); charts.branch.data.datasets[0].data = opEntries.map(e=>e[1]); charts.branch.update('none'); }
 
   // Trend (group by date)
   const byDate = {};
