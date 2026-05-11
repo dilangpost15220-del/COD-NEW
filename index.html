@@ -875,49 +875,22 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
 
       <!-- === IMPORT === -->
       <div class="page" id="page-import">
-        <div class="card" style="margin-bottom:20px">
+        <div class="card" style="max-width:600px;margin:0 auto">
           <div class="card-header">
-            <div class="card-title"><i class="fas fa-file-import" style="color:var(--accent)"></i>นำเข้าข้อมูลพัสดุใหม่</div>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-accent btn-sm" onclick="pushToSheet()"><i class="fas fa-cloud-upload-alt"></i> อัปโหลดไป Sheet</button>
-            </div>
+            <div class="card-title"><i class="fas fa-file-import" style="color:var(--accent)"></i>นำเข้าข้อมูล</div>
           </div>
           <div class="card-body">
-            <div style="display:grid;grid-template-columns:300px 1fr;gap:20px">
-              <div>
-                <div class="drop-zone" id="dropZone" style="padding:30px 20px">
-                  <i class="fas fa-cloud-upload-alt drop-icon" style="font-size:32px"></i>
-                  <div class="drop-title" style="font-size:13px">ลากไฟล์มาวาง หรือคลิก</div>
-                  <div class="drop-sub" style="font-size:11px">รองรับ .xlsx, .xls, .csv</div>
-                  <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileUpload(event)">
-                </div>
-                <div id="importStatus" style="display:none;margin-top:12px"></div>
-                <div style="margin-top:12px;font-size:11.5px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:10px;border:1px solid var(--border)">
-                  <strong style="color:var(--text)">💡 คำแนะนำ</strong><br>
-                  1. นำเข้าไฟล์พัสดุที่ต้องการถ่ายรูป<br>
-                  2. รายการจะแสดงในตารางด้านขวา<br>
-                  3. ถ่ายรูปให้ครบทุกรายการ<br>
-                  4. กด "อัปโหลดไป Sheet" เพื่อส่งข้อมูล
-                </div>
-              </div>
-              <div>
-                <div class="table-wrap" style="max-height:500px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
-                  <table style="width:100%;border-collapse:collapse">
-                    <thead style="position:sticky;top:0;background:var(--surface2);z-index:10">
-                      <tr>
-                        <th>#</th>
-                        <th>หมายเลขสิ่งของ</th>
-                        <th>รหัส ปณ.</th>
-                        <th style="text-align:center">รูปภาพ</th>
-                        <th style="text-align:center">สถานะอัปโหลด</th>
-                      </tr>
-                    </thead>
-                    <tbody id="importTableBody">
-                      <tr><td colspan="5" class="empty-state"><i class="fas fa-file-import"></i><p>ยังไม่มีข้อมูลนำเข้า</p></td></tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+            <div class="drop-zone" id="dropZone">
+              <i class="fas fa-cloud-upload-alt drop-icon"></i>
+              <div class="drop-title">ลากไฟล์มาวาง หรือคลิกเพื่อเลือก</div>
+              <div class="drop-sub">รองรับไฟล์ .xlsx, .xls, .csv</div>
+              <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileUpload(event)">
+            </div>
+            <div id="importStatus" style="display:none;margin-top:12px"></div>
+            <hr class="divider">
+            <div style="font-size:12.5px;color:var(--text3);background:var(--surface2);border-radius:8px;padding:12px;border:1px solid var(--border)">
+              <strong style="color:var(--text)">💡 ดึงจาก Google Sheet อัตโนมัติ</strong><br>
+              ใช้ปุ่ม <code style="background:var(--border);padding:2px 6px;border-radius:4px;font-size:11px">"ดึงจาก Sheet"</code> ในแถบด้านบน หรือตั้งค่าการเชื่อมต่อในหน้า <strong>ตั้งค่าระบบ</strong>
             </div>
           </div>
         </div>
@@ -1180,7 +1153,6 @@ if (body.action === 'uploadPhoto') {
 // ========================================================
 let parcels = [];
 let filteredParcels = [];
-let importQueue = []; // ✅ ข้อมูลที่นำเข้าใหม่เพื่อรอถ่ายรูปและส่งขึ้น Sheet
 let photos = {};
 let charts = {};
 let isBusy = false;
@@ -1283,10 +1255,6 @@ function showPage(page) {
   if (page === 'settings') { showSettingsTab('sheet'); loadAllSettings(); }
   if (page === 'dashboard' || page === 'analytics') renderCharts();
   if (page === 'records') renderTable();
-  if (page === 'import') {
-    // ✅ ไม่ต้องดึงข้อมูลใหม่เมื่อสลับหน้า ให้แสดงเฉพาะที่อยู่ใน queue
-    renderImportTable();
-  }
   if (page === 'operators') renderOperatorSummary();
   if (page === 'postcode') renderPostcodeSummary();
 
@@ -1533,9 +1501,7 @@ function uploadLocalPhoto(input, id, tracking) {
     if (p) p.photoUrl = dataUrl;
     const fp = filteredParcels.find(x => x.tracking === tracking || x.id == id);
     if (fp) fp.photoUrl = dataUrl;
-    const iq = importQueue.find(x => x.tracking === tracking || x.id == id);
-    if (iq) iq.photoUrl = dataUrl;
-    updateStats(); renderTable(); renderImportTable(); autoSave();
+    updateStats(); renderTable(); autoSave();
     toast('บันทึกรูปภาพลงเครื่องแล้ว', 'success');
     // Try upload to Drive/GitHub in background
     tryUploadPhotoToCloud(tracking, dataUrl);
@@ -1594,14 +1560,13 @@ async function uploadPhotoToDrive(tracking, dataUrl) {
     if (result.status === 'success' && (result.url || result.thumbnail)) {
       const finalUrl = result.url || result.thumbnail;
       // อัปเดต memory ทั้งหมด + photos cache
-      [parcels, filteredParcels, importQueue].forEach(arr => {
+      [parcels, filteredParcels].forEach(arr => {
         const p = arr.find(x => x.tracking === tracking);
         if (p) { p.photoUrl = finalUrl; p.driveFileId = result.fileId || ''; }
       });
       photos[tracking] = finalUrl;
       autoSave();
       renderTable();
-      renderImportTable();
       updatePendingPhotosBadge();
       dbg(`Drive upload สำเร็จ [${tracking}]: ${result.url}`, 'info');
       toast(`✅ อัปโหลดรูป ${tracking} ไป Drive สำเร็จ`, 'success');
@@ -1814,24 +1779,32 @@ async function fetchFromSheet() {
 async function pushToSheet() {
   const url = ls('scriptUrl');
   if (!url) { toast('กรุณาตั้งค่า Script URL ก่อน', 'warning'); return; }
-  // ✅ ใช้ข้อมูลจาก importQueue แทน parcels ในหน้า Import
-  const dataToPush = importQueue.length > 0 ? importQueue : parcels;
-  if (!dataToPush.length) { toast('ไม่มีข้อมูล', 'info'); return; }
+  if (!parcels.length) { toast('ไม่มีข้อมูล', 'info'); return; }
   if (isBusy) { toast('กำลังทำงานอยู่ รอสักครู่', 'info'); return; }
 
   isBusy = true;
   setSyncStatus('loading', 'กำลังอัปโหลด...');
-  showLoading('กำลังส่งข้อมูลไป Google Sheet...', `ส่ง ${dataToPush.length} รายการ`);
-  dbg(`เริ่ม pushToSheet: ${dataToPush.length} รายการ`, 'info');
+  showLoading('กำลังส่งข้อมูลไป Google Sheet...', `ส่ง ${parcels.length} รายการ`);
+  dbg(`เริ่ม pushToSheet: ${parcels.length} รายการ`, 'info');
 
   try {
+    // ✅ ตัด base64 ออกก่อน push — Sheet รองรับได้สูงสุด 50,000 ตัวอักษร/เซลล์
+    // base64 ขึ้นต้นด้วย "data:" → ตัดออก ส่งเฉพาะ Drive URL หรือเว้นว่าง
     const sanitizeUrl = (url) => {
       if (!url) return '';
-      if (url.startsWith('data:')) return '';
-      return url;
+      // ✅ ยอมรับ Base64 เฉพาะตอนกำลังทำงานในเครื่อง (ไม่ส่งขึ้น Sheet)
+      // แต่ตอนส่งข้อมูลไป Sheet (saveBatch) จะถูกกรองออกในจุดอื่นอยู่แล้ว
+      // ฟังก์ชันนี้ควรส่งคืน URL ที่ยาวพอสำหรับ Google Drive 2024-2025
+      return url.substring(0, 1000); 
     };
 
-    const payload = dataToPush.map(p => ({
+    const base64Count = parcels.filter(p => p.photoUrl?.startsWith('data:')).length;
+    if (base64Count > 0) {
+      toast(`⚠️ รูปภาพ ${base64Count} รายการเป็น base64 (เก็บในเครื่อง) — จะไม่ถูกส่งไป Sheet\nอัปโหลดไป Google Drive ก่อนเพื่อให้ URL ถูกบันทึก`, 'warning', 6000);
+      dbg(`ตัด base64 photoUrl ออก ${base64Count} รายการก่อน push`, 'warn');
+    }
+
+    const payload = parcels.map(p => ({
       id: p.id, tracking: p.tracking, branch: p.branch, operator: p.operator,
       datetime: p.datetime, reason: p.reason, status: p.status,
       lazada: p.lazada, holdDays: p.holdDays, attempts: p.attempts,
@@ -1840,6 +1813,7 @@ async function pushToSheet() {
       updatedAt: new Date().toISOString()
     }));
 
+    // ✅ FIX: Apps Script POST ต้องใช้ Content-Type: text/plain เพื่อหลีก CORS preflight
     const res = await fetchWithTimeout(url, {
       method: 'POST',
       mode: 'cors',
@@ -1847,7 +1821,9 @@ async function pushToSheet() {
       body: JSON.stringify({ action: 'saveBatch', data: payload, timestamp: new Date().toISOString() })
     }, 60000);
 
+    dbg(`pushToSheet response: ${res.status}`, 'info');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
     const text = await res.text();
     let result;
     try { result = JSON.parse(text); }
@@ -1855,66 +1831,19 @@ async function pushToSheet() {
 
     if (result.status !== 'success') throw new Error(result.message || 'Push ล้มเหลว');
 
-    // ✅ ตรวจสอบรูปภาพที่ยังเป็น base64
-    const pendingPhotos = dataToPush.filter(p => p.photoUrl?.startsWith('data:'));
-    if (pendingPhotos.length > 0) {
-      toast(`⚠️ ข้อมูลเข้า Sheet แล้ว แต่ยังมีรูปค้าง ${pendingPhotos.length} รายการที่ยังไม่ขึ้น Drive`, 'warning', 8000);
-      dataToPush.forEach(p => { if (p.photoUrl?.startsWith('data:')) p.uploadStatus = 'fail'; else p.uploadStatus = 'success'; });
-    } else {
-      toast(`✅ อัปโหลดสำเร็จ ${payload.length} รายการ`, 'success');
-      dataToPush.forEach(p => p.uploadStatus = 'success');
-    }
-
-    renderImportTable();
     setSyncStatus('ok', `อัปโหลดสำเร็จ ${payload.length} รายการ`);
     lsSet('lastSync', new Date().toISOString());
+    toast(`✅ อัปโหลดสำเร็จ ${payload.length} รายการ`, 'success');
     dbg(`pushToSheet สำเร็จ`, 'info');
 
   } catch (err) {
     dbg(`pushToSheet error: ${err.message}`, 'err');
     setSyncStatus('err', 'อัปโหลดล้มเหลว');
     toast(`❌ อัปโหลดไม่สำเร็จ: ${err.message}`, 'error', 5000);
-    dataToPush.forEach(p => p.uploadStatus = 'fail');
-    renderImportTable();
   } finally {
     isBusy = false;
     hideLoading();
   }
-}
-
-function renderImportTable() {
-  const tbody = document.getElementById('importTableBody');
-  if (!tbody) return;
-  // ✅ ใช้ importQueue แทน parcels เพื่อให้เริ่มต้นด้วยสถานะว่าง
-  if (!importQueue.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="fas fa-file-import"></i><p>ยังไม่มีข้อมูลนำเข้า</p></td></tr>';
-    return;
-  }
-  tbody.innerHTML = importQueue.map((p, i) => {
-    let photoSrc = photos[p.tracking] || p.photoUrl || '';
-    if (photoSrc.includes('drive.google.com/uc?id=') || photoSrc.includes('drive.google.com/open?id=')) {
-      const fileId = photoSrc.split('id=')[1]?.split('&')[0];
-      if (fileId) photoSrc = `https://lh3.googleusercontent.com/d/${fileId}=s300`;
-    }
-    
-    const photoCell = photoSrc
-      ? `<img class="photo-thumb" src="${photoSrc}" style="width:32px;height:32px" onclick="openPhoto('${p.tracking}','${photoSrc.replace(/'/g,"\\'")}')">`
-      : `<label class="photo-upload-btn" style="width:32px;height:32px;font-size:10px"><i class="fas fa-camera"></i><input type="file" accept="image/*" style="display:none" onchange="uploadLocalPhoto(this,'${p.id}','${p.tracking}')"></label>`;
-    
-    const uploadStatusHtml = p.uploadStatus === 'success' 
-      ? '<span class="status-pill status-success" style="padding:2px 8px;font-size:10px"><i class="fas fa-check"></i> สำเร็จ</span>'
-      : p.uploadStatus === 'fail'
-      ? '<span class="status-pill status-danger" style="padding:2px 8px;font-size:10px"><i class="fas fa-times"></i> ไม่สำเร็จ</span>'
-      : '<span class="status-pill status-warning" style="padding:2px 8px;font-size:10px"><i class="fas fa-clock"></i> รอส่ง</span>';
-
-    return `<tr style="border-bottom:1px solid var(--border)">
-      <td style="font-size:11px;color:var(--text3);padding:8px 14px">${i+1}</td>
-      <td class="mono" style="font-size:11px;padding:8px 14px">${p.tracking}</td>
-      <td style="font-size:11px;padding:8px 14px">${p.branch || '-'}</td>
-      <td style="text-align:center;padding:8px 14px">${photoCell}</td>
-      <td style="text-align:center;padding:8px 14px">${uploadStatusHtml}</td>
-    </tr>`;
-  }).join('');
 }
 
 // ========================================================
@@ -2075,12 +2004,13 @@ function handleFileUpload(event) {
       }
       const maxId = parcels.length ? Math.max(...parcels.map(p => p.id||0)) : 0;
       const imported = data.map((row, idx) => normalizeParcel(row, maxId + idx + 1));
-    // ✅ เก็บข้อมูลที่นำเข้าใหม่ไว้ใน queue เพื่อแยกจากข้อมูลหลัก
-    importQueue = [...imported];
-    renderImportTable();
-    autoSave();
-    setStatus(`<div class="conn-result conn-ok"><i class="fas fa-check-circle"></i> นำเข้าสำเร็จ ${imported.length} รายการ</div>`);
-    dbg(`Import สำเร็จ: ${imported.length} รายการ`, 'info');
+      parcels = [...parcels, ...imported];
+      filteredParcels = [...parcels];
+      updateStats(); renderTable(); renderDailyGrid(); renderCharts();
+      autoSave();
+      setStatus(`<div class="conn-result conn-ok"><i class="fas fa-check-circle"></i> นำเข้าสำเร็จ ${imported.length} รายการ</div>`);
+      setTimeout(() => { showPage('dashboard'); }, 1500);
+      dbg(`Import สำเร็จ: ${imported.length} รายการ`, 'info');
     } catch (err) {
       dbg('Import error: ' + err.message, 'err');
       setStatus(`<div class="conn-result conn-err"><i class="fas fa-exclamation-circle"></i> เกิดข้อผิดพลาด: ${err.message}</div>`);
