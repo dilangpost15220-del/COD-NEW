@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ระบบติดตาม COD 2-4 วัน — ปณ.ในสังกัดจังหวัดลพบุรี</title>
+<title>Tracking Pro V6 — ระบบติดตามพัสดุ</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
@@ -663,8 +663,8 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
     <div class="sidebar-logo" id="logoBtn" title="คลิก 5 ครั้ง หรือ กด ? ค้าง 3 วินาที เพื่อเข้าเมนูตั้งค่า">
       <div class="logo-icon"><i class="fas fa-box-open"></i></div>
       <div class="logo-text">
-        <h1>ระบบติดตาม COD 2-4 วัน</h1>
-        <p>ปณ.ในสังกัดจังหวัดลพบุรี</p>
+        <h1>Tracking Pro</h1>
+        <p>ระบบจัดการพัสดุ V6</p>
       </div>
     </div>
     <nav class="nav">
@@ -1487,9 +1487,9 @@ function applyFilter() {
   }
 
   filteredParcels = parcels.filter(p => {
-    // เทียบวันที่จาก datetimeFmt (dd/mm/yyyy) หรือ datetime เดิม
+    // ✅ เปลี่ยนมาเทียบจาก processedDate (วันที่ทำรายการจริง)
     if (dateFormatted) {
-      const pDate = p.datetimeFmt || formatDatetime(p.datetime) || '';
+      const pDate = p.processedDate || '';
       if (!pDate.includes(dateFormatted)) return false;
     }
     if (branch && !(p.branch||'').toLowerCase().includes(branch)) return false;
@@ -1506,18 +1506,13 @@ function applyFilter() {
   updateStats(); renderTable(); renderDailyGrid(); renderCharts(); renderOperatorSummary();
 }
 function clearFilter() {
-  const dateInput = document.getElementById('filterDate');
-  if (dateInput) {
-    // ตั้งค่ากลับเป็นวันที่ปัจจุบัน
-    const now = new Date();
-    dateInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  }
-  
-  ['filterBranch','filterStatus'].forEach(id => {
-    const el = document.getElementById(id); if(el) el.value = '';
+  // ✅ เคลียร์ค่าทุกช่องให้ว่างเปล่า
+  ['filterDate', 'filterBranch', 'filterStatus'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
   });
 
-  // หลังจากล้างแล้วให้ทำการกรองใหม่ตามวันที่ปัจจุบัน
+  // ✅ เรียก applyFilter เพื่อแสดงข้อมูลทั้งหมด (ไม่มีการกรอง)
   applyFilter();
 }
 
@@ -1528,10 +1523,16 @@ function updateStatus(id, selectEl) {
   const newStatus = selectEl.value;
   const cls = newStatus === 'สำเร็จ' ? 's-success' : newStatus === 'ไม่สำเร็จ' ? 's-danger' : 's-warning';
   selectEl.className = 'status-select ' + cls;
+  
+  // บันทึกวันที่ทำรายการจริง (processedDate) เป็นวันนี้เมื่อมีการอัปเดตสถานะ
+  const now = new Date();
+  const todayFmt = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+
   const p = parcels.find(x => x.id === id);
-  if (p) p.status = newStatus;
+  if (p) { p.status = newStatus; p.processedDate = p.processedDate || todayFmt; }
   const fp = filteredParcels.find(x => x.id === id);
-  if (fp) fp.status = newStatus;
+  if (fp) { fp.status = newStatus; fp.processedDate = fp.processedDate || todayFmt; }
+  
   updateStats(); renderDailyGrid(); renderCharts();
   autoSave();
 }
@@ -1556,12 +1557,18 @@ function uploadLocalPhoto(input, id, tracking) {
   reader.onload = e => {
     const dataUrl = e.target.result;
     photos[tracking] = dataUrl;
+    
+    // บันทึกวันที่ทำรายการจริง (processedDate) เป็นวันนี้
+    const now = new Date();
+    const todayFmt = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+
     const p = parcels.find(x => x.tracking === tracking || x.id == id);
-    if (p) p.photoUrl = dataUrl;
+    if (p) { p.photoUrl = dataUrl; p.processedDate = todayFmt; }
     const fp = filteredParcels.find(x => x.tracking === tracking || x.id == id);
-    if (fp) fp.photoUrl = dataUrl;
+    if (fp) { fp.photoUrl = dataUrl; fp.processedDate = todayFmt; }
     const iq = importQueue.find(x => x.tracking === tracking || x.id == id);
-    if (iq) iq.photoUrl = dataUrl;
+    if (iq) { iq.photoUrl = dataUrl; iq.processedDate = todayFmt; }
+    
     updateStats(); renderTable(); renderImportTable(); autoSave();
     toast('บันทึกรูปภาพลงเครื่องแล้ว', 'success');
     // Try upload to Drive/GitHub in background
@@ -1864,6 +1871,7 @@ async function pushToSheet() {
       lazada: p.lazada, holdDays: p.holdDays, attempts: p.attempts,
       photoUrl: sanitizeUrl(p.photoUrl),
       driveFileId: p.driveFileId || '',
+      processedDate: p.processedDate || '', // ✅ ส่งวันที่ทำรายการจริงกลับไปด้วย
       updatedAt: new Date().toISOString()
     }));
 
@@ -2071,7 +2079,8 @@ function normalizeParcel(item, idx) {
     holdDays: rawHoldDays,
     attempts: rawAttempts,
     photoUrl: item.photoUrl || item.photo || item.Photo || '',
-    driveFileId: item.driveFileId || ''
+    driveFileId: item.driveFileId || '',
+    processedDate: item.processedDate || item['วันที่ทำรายการ'] || '' // วันที่ถ่ายรูป/อัปโหลดจริง
   };
 }
 
