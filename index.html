@@ -1221,7 +1221,7 @@ function applyFilters() {
   const { date, branch, status, operator, search } = activeFilters;
   
   filteredParcels = parcels.filter(p => {
-    if (date && !(p.datetime||'').includes(date)) return false;
+    if (date && !(p.updatedAt||'').includes(date)) return false;
     if (branch && !(p.branch||'').toLowerCase().includes(branch)) return false;
     if (status && p.status !== status) return false;
     if (operator && !(p.operator||'').toLowerCase().includes(operator)) return false;
@@ -1885,7 +1885,7 @@ function renderCharts() {
   const opEntries = Object.entries(ops).sort((a,b)=>b[1]-a[1]).slice(0,10);
   if (charts.branch) { charts.branch.data.labels = opEntries.map(e=>e[0]); charts.branch.data.datasets[0].data = opEntries.map(e=>e[1]); charts.branch.update('none'); }
 
-  const byDate = {}; filteredParcels.forEach(p => { const d = (p.datetime||'').split(' ')[0] || (p.datetime||'').substring(0,10) || 'ไม่ระบุ'; if (!byDate[d]) byDate[d] = { s:0, f:0 }; if (p.status==='สำเร็จ') byDate[d].s++; else if (p.status==='ไม่สำเร็จ') byDate[d].f++; });
+  const byDate = {}; filteredParcels.forEach(p => { const d = (p.updatedAt||'').split('T')[0] || (p.updatedAt||'').substring(0,10) || 'ไม่ระบุ'; if (!byDate[d]) byDate[d] = { s:0, f:0 }; if (p.status==='สำเร็จ') byDate[d].s++; else if (p.status==='ไม่สำเร็จ') byDate[d].f++; });
   const dates = Object.keys(byDate).sort().slice(-14);
   if (charts.trend) { charts.trend.data.labels = dates; charts.trend.data.datasets[0].data = dates.map(d => byDate[d].s); charts.trend.data.datasets[1].data = dates.map(d => byDate[d].f); charts.trend.update('none'); }
 }
