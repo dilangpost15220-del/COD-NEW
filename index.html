@@ -687,9 +687,9 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
             <label><i class="fas fa-check-circle"></i> สถานะ</label>
             <select id="filterStatus" class="form-control" onchange="applyAdvancedFilter()">
               <option value="">ทั้งหมด</option>
-              <option value="สำเร็จ">✅ สำเร็จ</option>
-              <option value="ไม่สำเร็จ">❌ ไม่สำเร็จ</option>
-              <option value="รอ">⏳ รอ</option>
+              <option value="สำเร็จ">✅ นำจ่ายสำเร็จ (สาเหตุว่าง)</option>
+              <option value="ไม่สำเร็จ">❌ นำจ่ายไม่สำเร็จ (มีสาเหตุ)</option>
+              <option value="รอ">⏳ รอดำเนินการ</option>
             </select>
           </div>
           <div class="form-group">
@@ -726,19 +726,19 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
           <div class="stat-card success-card">
             <div class="stat-label">นำจ่ายสำเร็จ</div>
             <div class="stat-value" style="color:var(--success)" id="statSuccess">0</div>
-            <div class="stat-sub" id="statSuccessRate">อัตรา 0%</div>
+            <div class="stat-sub" id="statSuccessRate">สาเหตุว่าง · อัตรา 0%</div>
             <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
           </div>
           <div class="stat-card danger-card">
             <div class="stat-label">นำจ่ายไม่สำเร็จ</div>
             <div class="stat-value" style="color:var(--danger)" id="statFailed">0</div>
-            <div class="stat-sub" id="statFailedRate">อัตรา 0%</div>
+            <div class="stat-sub" id="statFailedRate">มีสาเหตุ · อัตรา 0%</div>
             <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
           </div>
           <div class="stat-card warning-card">
             <div class="stat-label">มีหลักฐานรูปภาพ</div>
             <div class="stat-value" style="color:var(--warning)" id="statPhoto">0</div>
-            <div class="stat-sub" id="statPhotoRate">คิดเป็น 0%</div>
+            <div class="stat-sub" id="statPhotoRate">📸 ถ่ายรูปสำเร็จ 0%</div>
             <div class="stat-icon"><i class="fas fa-camera"></i></div>
           </div>
         </div>
@@ -756,6 +756,18 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('dailyDashSearch').value='';renderDailyDashboard()">ทั้งหมด</button>
             </div>
           </div>
+          <!-- 📋 ตำนานตรรกะการตีความ -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:11px">
+            <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);padding:4px 10px;border-radius:20px;color:var(--success)">
+              <i class="fas fa-camera"></i> <strong>ถ่ายรูปสำเร็จ</strong> = หน.ปณ.อัปโหลดข้อมูลแล้ว
+            </div>
+            <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);padding:4px 10px;border-radius:20px;color:var(--danger)">
+              <i class="fas fa-times-circle"></i> <strong>นำจ่ายไม่สำเร็จ</strong> = มีข้อความในช่อง "สาเหตุ"
+            </div>
+            <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);padding:4px 10px;border-radius:20px;color:var(--warning)">
+              <i class="fas fa-info-circle"></i> สาเหตุว่างเปล่า = นำจ่ายสำเร็จ
+            </div>
+          </div>
           <div class="table-wrap card" style="border-radius:12px">
             <table style="font-size:13px">
               <thead>
@@ -763,9 +775,9 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
                   <th style="text-align:left">วันที่อัปเดต</th>
                   <th style="text-align:left">ปณ. (สาขา)</th>
                   <th style="text-align:center">ชิ้นงานทั้งหมด</th>
-                  <th style="text-align:center">ถ่ายภาพแล้ว</th>
-                  <th style="text-align:center">ยังไม่ถ่ายภาพ</th>
-                  <th style="text-align:center">% ความสำเร็จ</th>
+                  <th style="text-align:center">📸 ถ่ายรูปสำเร็จ<br><span style="font-size:9px;font-weight:400;color:var(--text2)">หน.ปณ.อัปโหลดแล้ว</span></th>
+                  <th style="text-align:center">❌ นำจ่ายไม่สำเร็จ<br><span style="font-size:9px;font-weight:400;color:var(--text2)">มีสาเหตุในช่อง</span></th>
+                  <th style="text-align:center">% ถ่ายรูปสำเร็จ</th>
                 </tr>
               </thead>
               <tbody id="dailyDashboardBody">
@@ -836,7 +848,7 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
                   <th>ผู้ดำเนินการ</th>
                   <th>วันที่/เวลา</th>
                   <th style="text-align:center">จำนวนวันที่ถือครอง<br><span style="font-size:9px;color:var(--text2);font-weight:500">นับจากวันที่ปลายทาง</span></th>
-                  <th>สาเหตุ</th>
+                  <th>สาเหตุ <span style="font-size:9px;color:var(--text3);font-weight:400">(ว่าง=สำเร็จ / มีข้อความ=ไม่สำเร็จ)</span></th>
                   <th style="text-align:center">รูปภาพ</th>
                   <th style="text-align:center">⚠️ ความเสี่ยง</th>
                   <th style="text-align:center">สถานะ / จัดการ</th>
@@ -1071,7 +1083,7 @@ function calculateRiskScore(parcel) {
 // 📊 ฟังก์ชันวิเคราะห์สถิติเชิงลึก (Level 2)
 function analyzeDeliveryPatterns() {
   const result = {
-    peakHours: {},
+    dangerHours: {},
     failureByReason: {},
     failureByBranch: {},
     operatorEfficiency: {},
@@ -1079,12 +1091,12 @@ function analyzeDeliveryPatterns() {
     predictedDelays: []
   };
   
-  // 🔍 วิเคราะห์ชั่วโมงทองของการส่งสำเร็จ
-  parcels.filter(p => p.status === 'สำเร็จ' && p.datetime).forEach(p => {
+  // 🔍 วิเคราะห์ "ชั่วโมงอันตราย" — ช่วงเวลาที่นำจ่ายไม่สำเร็จสูงสุด
+  parcels.filter(p => p.status === 'ไม่สำเร็จ' && p.datetime).forEach(p => {
     const date = formatDatetime(p.datetime);
     if (date) {
       const hour = date.getHours();
-      result.peakHours[hour] = (result.peakHours[hour] || 0) + 1;
+      result.dangerHours[hour] = (result.dangerHours[hour] || 0) + 1;
     }
   });
   
@@ -1472,8 +1484,8 @@ function updateStats() {
   const pRate = total ? Math.round(withPhoto/total*100) : 0;
 
   setText('statTotal', total); setText('statSuccess', success); setText('statFailed', failed); setText('statPhoto', withPhoto);
-  setText('statSuccessRate', 'อัตรา ' + sRate + '%'); setText('statFailedRate', 'อัตรา ' + fRate + '%');
-  setText('statPhotoRate', 'คิดเป็น ' + pRate + '%'); setText('recordCount', total);
+  setText('statSuccessRate', 'สาเหตุว่าง · อัตรา ' + sRate + '%'); setText('statFailedRate', 'มีสาเหตุ · อัตรา ' + fRate + '%');
+  setText('statPhotoRate', '📸 ถ่ายรูปสำเร็จ ' + pRate + '%'); setText('recordCount', total);
   setText('navBadge', total); setText('lastUpdated', 'อัปเดตล่าสุด: ' + new Date().toLocaleTimeString('th-TH'));
 }
 
@@ -1543,10 +1555,12 @@ function renderDailyDashboard() {
     const branch = p.branch || 'ไม่ระบุสาขา';
     const key = `${dateStr}_${branch}`;
 
-    if (!byDate[key]) byDate[key] = { date: dateStr, branch: branch, total: 0, withPhoto: 0, noPhoto: 0 };
+    if (!byDate[key]) byDate[key] = { date: dateStr, branch: branch, total: 0, photoSuccess: 0, deliveryFailed: 0 };
     byDate[key].total++;
-    if (photos[p.tracking] || p.photoUrl) byDate[key].withPhoto++;
-    else byDate[key].noPhoto++;
+    // 📸 ถ่ายรูปสำเร็จ = หน.ปณ.อัปโหลดข้อมูลแล้ว (มี photoUrl หรือ updatedAt = มีการบันทึก)
+    if (photos[p.tracking] || p.photoUrl) byDate[key].photoSuccess++;
+    // ❌ นำจ่ายไม่สำเร็จ = ช่องสาเหตุมีข้อความ
+    if ((p.reason || '').trim() !== '') byDate[key].deliveryFailed++;
   });
 
   const sortedData = Object.values(byDate).sort((a, b) => {
@@ -1561,7 +1575,7 @@ function renderDailyDashboard() {
   }
 
   tbody.innerHTML = sortedData.map(d => {
-    const successRate = d.total ? Math.round((d.withPhoto / d.total) * 100) : 0;
+    const photoRate = d.total ? Math.round((d.photoSuccess / d.total) * 100) : 0;
     const [y, m, day] = d.date.split('-');
     const displayDate = `${day}/${m}/${y}`;
     return `
@@ -1569,13 +1583,13 @@ function renderDailyDashboard() {
         <td style="padding:12px 14px;font-weight:600;color:var(--accent)">${displayDate}</td>
         <td style="padding:12px 14px;font-weight:500">${d.branch}</td>
         <td style="padding:12px 14px;text-align:center;font-family:'IBM Plex Mono',monospace">${d.total}</td>
-        <td style="padding:12px 14px;text-align:center;color:var(--success);font-weight:600">${d.withPhoto}</td>
-        <td style="padding:12px 14px;text-align:center;color:var(--danger)">${d.noPhoto}</td>
+        <td style="padding:12px 14px;text-align:center;color:var(--success);font-weight:600">${d.photoSuccess}</td>
+        <td style="padding:12px 14px;text-align:center;color:var(--danger);font-weight:600">${d.deliveryFailed}</td>
         <td style="padding:12px 14px;text-align:center">
           <div style="display:flex;align-items:center;justify-content:center;gap:8px">
-            <span style="font-weight:700;min-width:40px">${successRate}%</span>
+            <span style="font-weight:700;min-width:40px">${photoRate}%</span>
             <div style="flex:1;max-width:100px;height:6px;background:var(--border);border-radius:3px;overflow:hidden">
-              <div style="width:${successRate}%;height:100%;background:linear-gradient(90deg, var(--success), var(--accent2))"></div>
+              <div style="width:${photoRate}%;height:100%;background:linear-gradient(90deg, var(--success), var(--accent2))"></div>
             </div>
           </div>
         </td>
@@ -1591,11 +1605,16 @@ function renderBehaviorInsights() {
   
   const patterns = analyzeDeliveryPatterns();
   
-  // 🕐 Peak Hours
-  const peakEntries = Object.entries(patterns.peakHours).sort((a,b) => b[1]-a[1]).slice(0,3);
-  const peakHtml = peakEntries.length 
-    ? peakEntries.map(([h, c]) => `<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--success)">${h}:00</div><div style="font-size:10px;color:var(--text3)">${c} ชิ้น</div></div>`)
-      .join('')
+  // ⚠️ Danger Hours (ชั่วโมงอันตราย)
+  const dangerEntries = Object.entries(patterns.dangerHours).sort((a,b) => b[1]-a[1]).slice(0,3);
+  const dangerHtml = dangerEntries.length 
+    ? dangerEntries.map(([h, c], idx) => {
+        const colors = ['var(--danger)', 'var(--warning)', '#f97316'];
+        return `<div style="text-align:center">
+          <div style="font-size:18px;font-weight:700;color:${colors[idx]}">${String(h).padStart(2,'0')}:00</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${c} ครั้ง</div>
+        </div>`;
+      }).join('')
     : '<div style="color:var(--text3);font-size:12px">ยังไม่มีข้อมูล</div>';
   
   // ❌ Top Failure Reasons
@@ -1629,13 +1648,13 @@ function renderBehaviorInsights() {
   
   container.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-      <!-- 🕐 ชั่วโมงทอง -->
-      <div class="stat-card" style="padding:14px">
+      <!-- ⚠️ ชั่วโมงอันตราย -->
+      <div class="stat-card" style="padding:14px;border-top:3px solid var(--danger)">
         <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
-          <i class="fas fa-clock" style="color:var(--accent)"></i> ชั่วโมงทอง
+          <i class="fas fa-exclamation-circle" style="color:var(--danger)"></i> ชั่วโมงอันตราย
         </div>
-        <div style="display:flex;justify-content:space-around;align-items:center">${peakHtml}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">ช่วงเวลาที่ส่งสำเร็จสูงสุด</div>
+        <div style="display:flex;justify-content:space-around;align-items:center">${dangerHtml}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">ช่วงเวลาที่นำจ่ายไม่สำเร็จสูงสุด</div>
       </div>
       
       <!-- ❌ สาเหตุไม่สำเร็จ -->
@@ -1979,6 +1998,25 @@ function fmtDate(d) {
 function normalizeParcel(item, idx) {
   const rawDatetime = item.datetime || item['วันที่ เวลา (สแกนผลการนำจ่ายล่าสุด)'] || item['วันที่ เวลา'] || item['วันที่เวลา'] || item['วันที่'] || item['เวลา'] || item['date'] || item['Date'] || item['Datetime'] || item['timestamp'] || item['scanTime'] || Object.entries(item).find(([k,v]) => /วัน|เวลา|date|time|stamp/i.test(k) && v && v !== '')?.[1] || '';
   const rawUpdatedAt = item.updatedAt || item.UpdatedAt || item['วันที่อัปเดต'] || '';
+  const rawReason = (item.reason || item['สาเหตุ'] || item['เหตุผล'] || item.Reason || '').trim();
+  const rawPhotoUrl = item.photoUrl || item.photo || item.Photo || '';
+
+  // ✅ ตรรกะหลัก: ตีความสถานะจากช่อง "สาเหตุ"
+  // - มีข้อความในช่องสาเหตุ   → ❌ นำจ่ายไม่สำเร็จ  (หน.ปณ.ถ่ายรูป+อัปโหลดสำเร็จ แต่พัสดุส่งไม่ได้)
+  // - ช่องสาเหตุว่างเปล่า     → ✅ นำจ่ายสำเร็จ
+  // - ยังไม่มีรูป/ข้อมูลไม่ครบ → ⏳ รอดำเนินการ
+  let derivedStatus;
+  if (!rawPhotoUrl && !rawUpdatedAt) {
+    // ยังไม่มีการอัปโหลดข้อมูลจาก หน.ปณ. เลย → รอ
+    derivedStatus = 'รอ';
+  } else if (rawReason !== '') {
+    // มีข้อความในช่องสาเหตุ = ส่งไม่สำเร็จ
+    derivedStatus = 'ไม่สำเร็จ';
+  } else {
+    // ช่องสาเหตุว่าง = นำจ่ายสำเร็จ
+    derivedStatus = 'สำเร็จ';
+  }
+
   return {
     id: item.id || item.ID || item['ลำดับ'] || (Date.now() + idx),
     tracking: item.tracking || item['หมายเลขสิ่งของ'] || item['เลขพัสดุ'] || item.Tracking || `TRK-${Date.now()}-${idx}`,
@@ -1987,12 +2025,12 @@ function normalizeParcel(item, idx) {
     datetime: rawDatetime,
     datetimeFmt: fmtDate(formatDatetime(rawDatetime)),
     updatedAt: rawUpdatedAt,
-    reason: item.reason || item['สาเหตุ'] || item['เหตุผล'] || item.Reason || '',
-    status: item.status || item.Status || 'รอ',
+    reason: rawReason,
+    status: derivedStatus,
     lazada: item.lazada || item['Lazada?'] || item.Lazada || '',
     holdDays: item.holdDaysDestination || item['จำนวนวันที่ถือครอง (นับจากวันที่ปลายทาง)'] || item.holdDays || item['จำนวนวันที่ถือครอง (นับจากวันที่รับฝาก)'] || item['จำนวนวันที่ถือครอง'] || '',
     attempts: item.attempts || item['จำนวนครั้งที่พยายามนำจ่าย'] || item['จำนวนครั้งที่นำจ่าย'] || item['Attempts'] || '0',
-    photoUrl: item.photoUrl || item.photo || item.Photo || '',
+    photoUrl: rawPhotoUrl,
     driveFileId: item.driveFileId || ''
   };
 }
