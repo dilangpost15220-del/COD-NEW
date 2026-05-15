@@ -150,7 +150,7 @@ body {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
 }
-.filter-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 12px; }
+.filter-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-bottom: 12px; }
 .form-group label {
   display: block; font-size: 11px; color: var(--text3); margin-bottom: 5px;
   text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600;
@@ -192,6 +192,9 @@ body {
 .filter-chip.status-success { background: rgba(16,185,129,0.15); color: var(--success); border-color: rgba(16,185,129,0.3); }
 .filter-chip.status-danger { background: rgba(239,68,68,0.15); color: var(--danger); border-color: rgba(239,68,68,0.3); }
 .filter-chip.status-warning { background: rgba(245,158,11,0.15); color: var(--warning); border-color: rgba(245,158,11,0.3); }
+.filter-chip.risk-high { background: rgba(239,68,68,0.15); color: var(--danger); border-color: rgba(239,68,68,0.3); }
+.filter-chip.risk-mid { background: rgba(245,158,11,0.15); color: var(--warning); border-color: rgba(245,158,11,0.3); }
+.filter-chip.risk-low { background: rgba(16,185,129,0.15); color: var(--success); border-color: rgba(16,185,129,0.3); }
 .search-results-count {
   font-size: 11px; color: var(--text3); margin-left: auto;
   display: flex; align-items: center; gap: 4px;
@@ -671,7 +674,7 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
         <div class="filter-chips" id="filterChips"></div>
         
         <!-- Advanced Filters Grid -->
-        <div class="filter-grid" style="grid-template-columns:repeat(4,1fr);margin-top:12px">
+        <div class="filter-grid" style="grid-template-columns:repeat(5,1fr);margin-top:12px">
           <div class="form-group">
             <label><i class="far fa-calendar-alt"></i> วันที่</label>
             <input type="date" id="filterDate" class="form-control" onchange="applyAdvancedFilter()">
@@ -692,6 +695,15 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
           <div class="form-group">
             <label><i class="fas fa-user"></i> ผู้ดำเนินการ</label>
             <input type="text" id="filterOperator" placeholder="ค้นหาชื่อ..." class="form-control" oninput="applyAdvancedFilter()">
+          </div>
+          <div class="form-group">
+            <label><i class="fas fa-exclamation-triangle"></i> ความเสี่ยง</label>
+            <select id="filterRisk" class="form-control" onchange="applyAdvancedFilter()">
+              <option value="">ทั้งหมด</option>
+              <option value="สูง">🔴 สูง</option>
+              <option value="กลาง">🟡 กลาง</option>
+              <option value="ต่ำ">🟢 ต่ำ</option>
+            </select>
           </div>
         </div>
         
@@ -766,6 +778,9 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
           </div>
         </div>
 
+        <!-- 🎯 Behavior Insights Section (NEW - Level 2) -->
+        <div id="behaviorInsightsContainer" style="margin:24px 0"></div>
+
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
           <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px">
             <i class="fas fa-calendar-day" style="color:var(--accent)"></i> สรุปรายงานรายสาขา (ตามข้อมูลสแกน)
@@ -789,6 +804,13 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
             <div class="chart-label"><i class="fas fa-map-location-dot" style="color:var(--success)"></i>ผลงานราย ปณ.</div>
             <div class="chart-wrap" style="height:240px"><canvas id="operatorChart"></canvas></div>
           </div>
+        </div>
+        
+        <!-- Test Button (Optional) -->
+        <div style="text-align:center;margin-top:20px">
+          <button class="btn btn-ghost btn-sm" onclick="testRiskAnalysis()">
+            <i class="fas fa-vial"></i> ทดสอบวิเคราะห์ความเสี่ยง
+          </button>
         </div>
       </div>
 
@@ -819,11 +841,12 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
                   <th style="text-align:center">จำนวนวันที่ถือครอง<br><span style="font-size:9px;color:var(--text2);font-weight:500">นับจากวันที่ปลายทาง</span></th>
                   <th>สาเหตุ</th>
                   <th style="text-align:center">รูปภาพ</th>
+                  <th style="text-align:center">⚠️ ความเสี่ยง</th>
                   <th style="text-align:center">สถานะ / จัดการ</th>
                 </tr>
               </thead>
               <tbody id="recordsBody">
-                <tr><td colspan="9" class="empty-state"><i class="fas fa-inbox"></i><p>ยังไม่มีข้อมูล</p></td></tr>
+                <tr><td colspan="10" class="empty-state"><i class="fas fa-inbox"></i><p>ยังไม่มีข้อมูล</p></td></tr>
               </tbody>
             </table>
           </div>
@@ -995,8 +1018,151 @@ let settingsUnlocked = false;
 let logoClickCount = 0, logoClickTimer = null;
 let debugLogs = [];
 let imageCache = new Map();
-let activeFilters = { date: '', branch: '', status: '', operator: '', search: '' };
+let activeFilters = { date: '', branch: '', status: '', operator: '', search: '', risk: '' };
 let debounceTimers = {};
+
+// ===== 🎯 AI BEHAVIOR ANALYSIS - LEVEL 1: Rule-Based Risk Scoring =====
+const highRiskBranches = ['15001', '15002', '15003']; // ปรับรหัสสาขาที่มีความเสี่ยงสูงตามข้อมูลจริง
+
+function calculateRiskScore(parcel) {
+  let score = 0;
+  let factors = [];
+  
+  // 📅 ปัจจัยด้านระยะเวลาถือครอง
+  const holdDays = parseInt(parcel.holdDays) || 0;
+  if (holdDays >= 5) { score += 40; factors.push('ถือครอง ≥5 วัน'); }
+  else if (holdDays >= 3) { score += 25; factors.push('ถือครอง ≥3 วัน'); }
+  
+  // 🔄 ปัจจัยด้านจำนวนครั้งที่พยายามนำจ่าย
+  const attempts = parseInt(parcel.attempts) || 0;
+  if (attempts >= 3) { score += 30; factors.push('พยายาม ≥3 ครั้ง'); }
+  else if (attempts >= 2) { score += 15; factors.push('พยายาม ≥2 ครั้ง'); }
+  
+  // ❌ ปัจจัยด้านสถานะและสาเหตุ
+  if (parcel.status === 'ไม่สำเร็จ') {
+    score += 20;
+    if (parcel.reason?.includes('ไม่อยู่')) { score += 10; factors.push('ผู้รับไม่อยู่'); }
+    if (parcel.reason?.includes('ปิด') || parcel.reason?.includes('ย้าย')) { score += 15; factors.push('ที่อยู่มีปัญหา'); }
+    if (parcel.reason?.includes('ปฏิเสธ')) { score += 20; factors.push('ผู้รับปฏิเสธ'); }
+  }
+  
+  // 🏢 ปัจจัยด้านสาขา
+  if (parcel.branch && highRiskBranches.includes(parcel.branch)) {
+    score += 10; factors.push('สาขาเสี่ยง');
+  }
+  
+  // 📦 ปัจจัยด้าน Lazada (มักมีเงื่อนไขพิเศษ)
+  if (parcel.lazada && parcel.lazada.toLowerCase() === 'yes') {
+    score += 5; factors.push('พัสดุ Lazada');
+  }
+  
+  // 🎯 แปลงคะแนนเป็นระดับและคำแนะนำ
+  let level, color, advice, icon;
+  if (score >= 70) {
+    level = 'สูง'; color = 'var(--danger)'; advice = '📞 ติดต่อล่วงหน้า + ยืนยันที่อยู่ + พิจารณาส่งกลับ'; icon = '🔴';
+  } else if (score >= 40) {
+    level = 'กลาง'; color = 'var(--warning)'; advice = '📱 โทรยืนยันก่อนนำจ่าย + แจ้งเวลาโดยประมาณ'; icon = '🟡';
+  } else {
+    level = 'ต่ำ'; color = 'var(--success)'; advice = '✅ ดำเนินการตามปกติ'; icon = '🟢';
+  }
+  
+  return { score, level, color, advice, icon, factors };
+}
+
+// 📊 ฟังก์ชันวิเคราะห์สถิติเชิงลึก (Level 2)
+function analyzeDeliveryPatterns() {
+  const result = {
+    peakHours: {},
+    failureByReason: {},
+    failureByBranch: {},
+    operatorEfficiency: {},
+    avgHoldDaysByStatus: {},
+    predictedDelays: []
+  };
+  
+  // 🔍 วิเคราะห์ชั่วโมงทองของการส่งสำเร็จ
+  parcels.filter(p => p.status === 'สำเร็จ' && p.datetime).forEach(p => {
+    const date = formatDatetime(p.datetime);
+    if (date) {
+      const hour = date.getHours();
+      result.peakHours[hour] = (result.peakHours[hour] || 0) + 1;
+    }
+  });
+  
+  // 🔍 วิเคราะห์สาเหตุที่ไม่สำเร็จ
+  parcels.filter(p => p.status === 'ไม่สำเร็จ').forEach(p => {
+    const reason = (p.reason || 'ไม่ระบุสาเหตุ').substring(0, 30);
+    result.failureByReason[reason] = (result.failureByReason[reason] || 0) + 1;
+    
+    if (p.branch) {
+      result.failureByBranch[p.branch] = result.failureByBranch[p.branch] || { total: 0, failed: 0 };
+      result.failureByBranch[p.branch].total++;
+      result.failureByBranch[p.branch].failed++;
+    }
+  });
+  
+  // 🔍 วิเคราะห์ประสิทธิภาพผู้ดำเนินการ
+  parcels.forEach(p => {
+    const op = p.operator || 'ไม่ระบุ';
+    if (!result.operatorEfficiency[op]) {
+      result.operatorEfficiency[op] = { total: 0, success: 0, avgHoldDays: 0 };
+    }
+    result.operatorEfficiency[op].total++;
+    if (p.status === 'สำเร็จ') result.operatorEfficiency[op].success++;
+    result.operatorEfficiency[op].avgHoldDays += (parseInt(p.holdDays) || 0);
+  });
+  
+  // คำนวณค่าเฉลี่ย
+  Object.keys(result.operatorEfficiency).forEach(op => {
+    const data = result.operatorEfficiency[op];
+    data.successRate = data.total ? Math.round(data.success / data.total * 100) : 0;
+    data.avgHoldDays = Math.round(data.avgHoldDays / data.total * 10) / 10;
+  });
+  
+  // 🔍 พยากรณ์พัสดุที่อาจล่าช้า
+  result.predictedDelays = parcels.filter(p => 
+    p.status !== 'สำเร็จ' && (parseInt(p.holdDays) || 0) >= 3
+  ).map(p => ({
+    tracking: p.tracking,
+    branch: p.branch,
+    holdDays: p.holdDays,
+    riskScore: calculateRiskScore(p).score,
+    advice: calculateRiskScore(p).advice
+  })).sort((a, b) => b.riskScore - a.riskScore).slice(0, 10);
+  
+  return result;
+}
+
+// 🚨 Auto-alert for High-Risk Parcels
+function alertHighRiskParcels() {
+  const highRisk = filteredParcels.filter(p => calculateRiskScore(p).level === 'สูง');
+  if (highRisk.length > 0) {
+    highRisk.slice(0, 3).forEach(p => {
+      const risk = calculateRiskScore(p);
+      toast(`⚠️ ${p.tracking}: ${risk.advice}`, 'warning', 6000);
+    });
+    if (highRisk.length > 3) {
+      toast(`และอีก ${highRisk.length - 3} รายการที่มีความเสี่ยงสูง`, 'info', 4000);
+    }
+  }
+}
+
+// 🧪 Test Risk Analysis Function
+function testRiskAnalysis() {
+  if (!parcels.length) { toast('ไม่มีข้อมูลสำหรับทดสอบ', 'warning'); return; }
+  const sample = parcels[Math.floor(Math.random() * parcels.length)];
+  const risk = calculateRiskScore(sample);
+  
+  const msg = `📦 ${sample.tracking}\n` +
+              `🏢 สาขา: ${sample.branch||'-'}\n` +
+              `📅 ถือครอง: ${sample.holdDays||'-'} วัน\n` +
+              `🔄 พยายาม: ${sample.attempts||'-'} ครั้ง\n` +
+              `🎯 ความเสี่ยง: ${risk.icon} ${risk.level} (${risk.score} คะแนน)\n` +
+              `💡 คำแนะนำ: ${risk.advice}\n` +
+              (risk.factors.length ? `📋 ปัจจัย: ${risk.factors.join(', ')}` : '');
+  
+  alert(msg);
+}
 
 // ===== UTILITY FUNCTIONS =====
 function dbg(msg, type = 'info') {
@@ -1133,6 +1299,7 @@ function showPage(page) {
   if (page === 'dashboard' || page === 'analytics') renderCharts();
   if (page === 'records') { renderTable(); updateSearchResultsCount(); }
   if (page === 'operators') renderOperatorSummary();
+  if (page === 'dashboard') renderBehaviorInsights(); // Render new insights
 
   if (window.innerWidth < 768) document.getElementById('sidebar').classList.remove('open');
 }
@@ -1213,18 +1380,20 @@ function applyAdvancedFilter() {
   activeFilters.branch = document.getElementById('filterBranch')?.value?.toLowerCase().trim() || '';
   activeFilters.status = document.getElementById('filterStatus')?.value || '';
   activeFilters.operator = document.getElementById('filterOperator')?.value?.toLowerCase().trim() || '';
+  activeFilters.risk = document.getElementById('filterRisk')?.value || '';
   applyFilters();
   updateFilterChips();
 }
 
 function applyFilters() {
-  const { date, branch, status, operator, search } = activeFilters;
+  const { date, branch, status, operator, search, risk } = activeFilters;
   
   filteredParcels = parcels.filter(p => {
     if (date && !(p.updatedAt||'').includes(date)) return false;
     if (branch && !(p.branch||'').toLowerCase().includes(branch)) return false;
     if (status && p.status !== status) return false;
     if (operator && !(p.operator||'').toLowerCase().includes(operator)) return false;
+    if (risk && calculateRiskScore(p).level !== risk) return false;
     if (search) {
       const searchable = [p.tracking, p.branch, p.operator, p.reason, p.status, p.holdDays, p.attempts, p.lazada].filter(v => v).join(' ').toLowerCase();
       if (!searchable.includes(search)) return false;
@@ -1232,9 +1401,9 @@ function applyFilters() {
     return true;
   });
   
-    updateStats(); renderTable(); renderDailyGrid(); renderDailyDashboard(); renderCharts(); renderOperatorSummary();
-    updateSearchResultsCount();
-  }
+  updateStats(); renderTable(); renderDailyGrid(); renderDailyDashboard(); renderCharts(); renderOperatorSummary(); renderBehaviorInsights();
+  updateSearchResultsCount();
+}
 
 function updateFilterChips() {
   const container = document.getElementById('filterChips');
@@ -1248,6 +1417,10 @@ function updateFilterChips() {
     chips.push({ label: statusLabels[activeFilters.status] || activeFilters.status, key: 'status', value: activeFilters.status, removable: true, class: activeFilters.status === 'สำเร็จ' ? 'status-success' : activeFilters.status === 'ไม่สำเร็จ' ? 'status-danger' : 'status-warning' });
   }
   if (activeFilters.operator) chips.push({ label: `👤 ${activeFilters.operator}`, key: 'operator', value: activeFilters.operator, removable: true });
+  if (activeFilters.risk) {
+    const riskLabels = { 'สูง': '🔴 สูง', 'กลาง': '🟡 กลาง', 'ต่ำ': '🟢 ต่ำ' };
+    chips.push({ label: riskLabels[activeFilters.risk] || activeFilters.risk, key: 'risk', value: activeFilters.risk, removable: true, class: activeFilters.risk === 'สูง' ? 'risk-high' : activeFilters.risk === 'กลาง' ? 'risk-mid' : 'risk-low' });
+  }
   
   if (chips.length === 0) { container.innerHTML = ''; return; }
   
@@ -1265,17 +1438,18 @@ function removeFilterChip(key) {
   if (key === 'branch' && document.getElementById('filterBranch')) document.getElementById('filterBranch').value = '';
   if (key === 'status' && document.getElementById('filterStatus')) document.getElementById('filterStatus').value = '';
   if (key === 'operator' && document.getElementById('filterOperator')) document.getElementById('filterOperator').value = '';
+  if (key === 'risk' && document.getElementById('filterRisk')) document.getElementById('filterRisk').value = '';
   if (key === 'search' && document.getElementById('globalSearch')) document.getElementById('globalSearch').value = '';
   applyFilters(); updateFilterChips();
 }
 
 function clearAllFilters() {
-  activeFilters = { date: '', branch: '', status: '', operator: '', search: '' };
-  ['filterDate','filterBranch','filterStatus','filterOperator','globalSearch'].forEach(id => {
+  activeFilters = { date: '', branch: '', status: '', operator: '', search: '', risk: '' };
+  ['filterDate','filterBranch','filterStatus','filterOperator','filterRisk','globalSearch'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   filteredParcels = [...parcels];
-  updateStats(); renderTable(); renderDailyGrid(); renderCharts(); renderOperatorSummary();
+  updateStats(); renderTable(); renderDailyGrid(); renderCharts(); renderOperatorSummary(); renderBehaviorInsights();
   updateFilterChips(); updateSearchResultsCount();
 }
 
@@ -1346,9 +1520,6 @@ function renderDailyDashboard() {
 
   const byDate = {};
   parcels.forEach(p => {
-    // เน้น updatedAt เป็นหลักตามความต้องการของผู้ใช้
-    // ถ้าไม่มี updatedAt (เช่น รายการใหม่ที่ยังไม่ได้ทำอะไร) จะไม่นำมาคำนวณในแดชบอร์ดบันทึกภาพรายวัน
-    // หรือถ้าต้องการให้แสดงเฉพาะรายการที่มีการอัปเดตจริงๆ
     const dateVal = p.updatedAt;
     if (!dateVal || dateVal === '' || dateVal === '-') return;
     
@@ -1359,7 +1530,6 @@ function renderDailyDashboard() {
         const match = String(dateVal).match(/(\d{4})-(\d{2})-(\d{2})/);
         if (match) dateStr = `${match[1]}-${match[2]}-${match[3]}`;
         else {
-          // ลอง parse format dd/mm/yyyy
           const matchTH = String(dateVal).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
           if (matchTH) dateStr = `${matchTH[3]}-${matchTH[2].padStart(2,'0')}-${matchTH[1].padStart(2,'0')}`;
           else return;
@@ -1381,7 +1551,6 @@ function renderDailyDashboard() {
   });
 
   const sortedData = Object.values(byDate).sort((a, b) => {
-    // เรียงตามวันที่ก่อน (ใหม่ไปเก่า) แล้วตามด้วยชื่อสาขา
     const dateComp = b.date.localeCompare(a.date);
     if (dateComp !== 0) return dateComp;
     return a.branch.localeCompare(b.branch);
@@ -1416,12 +1585,96 @@ function renderDailyDashboard() {
   }).join('');
 }
 
-// 🖼️ Improved Table Rendering with Larger Images & Lazy Loading
+// 📈 Render Behavior Insights Cards (Level 2)
+function renderBehaviorInsights() {
+  const container = document.getElementById('behaviorInsightsContainer');
+  if (!container) return;
+  
+  const patterns = analyzeDeliveryPatterns();
+  
+  // 🕐 Peak Hours
+  const peakEntries = Object.entries(patterns.peakHours).sort((a,b) => b[1]-a[1]).slice(0,3);
+  const peakHtml = peakEntries.length 
+    ? peakEntries.map(([h, c]) => `<div style="text-align:center"><div style="font-size:18px;font-weight:700;color:var(--success)">${h}:00</div><div style="font-size:10px;color:var(--text3)">${c} ชิ้น</div></div>`)
+      .join('')
+    : '<div style="color:var(--text3);font-size:12px">ยังไม่มีข้อมูล</div>';
+  
+  // ❌ Top Failure Reasons
+  const reasonEntries = Object.entries(patterns.failureByReason).sort((a,b) => b[1]-a[1]).slice(0,3);
+  const reasonHtml = reasonEntries.length
+    ? reasonEntries.map(([r, c]) => `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:11px"><span class="truncate" style="max-width:120px" title="${r}">${r}</span><span style="font-weight:600;color:var(--danger)">${c}</span></div>`)
+      .join('')
+    : '<div style="color:var(--text3);font-size:12px">ยังไม่มีข้อมูล</div>';
+  
+  // 🎯 Predicted Delays
+  const delayHtml = patterns.predictedDelays.length
+    ? patterns.predictedDelays.slice(0,3).map(d => 
+        `<div style="padding:6px 0;border-bottom:1px dashed var(--border);font-size:11px">
+          <div style="font-weight:600;color:var(--accent2)">${d.tracking}</div>
+          <div style="color:var(--text3);font-size:10px">ถือครอง ${d.holdDays} วัน • ${d.advice}</div>
+        </div>`).join('')
+    : '<div style="color:var(--success);font-size:12px">✅ ไม่มีพัสดุเสี่ยงล่าช้า</div>';
+  
+  // 👥 Top Operators by Success Rate
+  const opEntries = Object.entries(patterns.operatorEfficiency)
+    .filter(([_, d]) => d.total >= 3)
+    .sort((a,b) => b[1].successRate - a[1].successRate)
+    .slice(0,3);
+  const operatorHtml = opEntries.length
+    ? opEntries.map(([name, d]) => 
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11px">
+          <span class="truncate" style="max-width:100px" title="${name}">${name}</span>
+          <span style="font-weight:600;color:${d.successRate>=80?'var(--success)':d.successRate>=50?'var(--warning)':'var(--danger)'}">${d.successRate}%</span>
+        </div>`).join('')
+    : '<div style="color:var(--text3);font-size:12px">ยังไม่มีข้อมูล</div>';
+  
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+      <!-- 🕐 ชั่วโมงทอง -->
+      <div class="stat-card" style="padding:14px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+          <i class="fas fa-clock" style="color:var(--accent)"></i> ชั่วโมงทอง
+        </div>
+        <div style="display:flex;justify-content:space-around;align-items:center">${peakHtml}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">ช่วงเวลาที่ส่งสำเร็จสูงสุด</div>
+      </div>
+      
+      <!-- ❌ สาเหตุไม่สำเร็จ -->
+      <div class="stat-card" style="padding:14px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+          <i class="fas fa-exclamation-triangle" style="color:var(--warning)"></i> สาเหตุหลัก
+        </div>
+        <div>${reasonHtml}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">3 สาเหตุที่พบบ่อย</div>
+      </div>
+      
+      <!-- 🎯 พยากรณ์ล่าช้า -->
+      <div class="stat-card" style="padding:14px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+          <i class="fas fa-bell" style="color:var(--danger)"></i> เสี่ยงล่าช้า
+        </div>
+        <div style="max-height:80px;overflow-y:auto">${delayHtml}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">พัสดุที่ต้องติดตาม</div>
+      </div>
+      
+      <!-- 👥 ประสิทธิภาพพนักงาน -->
+      <div class="stat-card" style="padding:14px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+          <i class="fas fa-user-check" style="color:var(--success)"></i> ทีมดีเด่น
+        </div>
+        <div>${operatorHtml}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;text-align:center">อัตราสำเร็จ (≥3 งาน)</div>
+      </div>
+    </div>
+  `;
+}
+
+// 🖼️ Updated Table Rendering with Risk Score Column
 function renderTable() {
   const tbody = document.getElementById('recordsBody');
   if (!tbody) return;
   if (!filteredParcels.length) {
-    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><i class="fas fa-inbox"></i><p>ยังไม่มีข้อมูล</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><i class="fas fa-inbox"></i><p>ยังไม่มีข้อมูล</p></div></td></tr>';
     return;
   }
   
@@ -1434,6 +1687,9 @@ function renderTable() {
     let photoSrc = photos[p.tracking] || p.photoUrl || '';
     let displayPhotoSrc = getCachedImageUrl(photoSrc, 's600');
     
+    // 🎯 คำนวณความเสี่ยงสำหรับรายการนี้
+    const risk = calculateRiskScore(p);
+    
     const photoCell = photoSrc
       ? `<img class="photo-thumb" src="${displayPhotoSrc}" loading="lazy" decoding="async" onclick="openPhoto('${p.tracking}','${photoSrc.replace(/'/g,"\\'")}')" onerror="handleImageError(this, '${p.driveFileId}')">`
       : `<label class="photo-upload-btn" title="อัปโหลดรูปภาพ"><i class="fas fa-camera"></i><input type="file" accept="image/*" style="display:none" onchange="uploadLocalPhoto(this,'${p.id}','${p.tracking}')"></label>`;
@@ -1442,6 +1698,9 @@ function renderTable() {
     const branchHtml = searchTerm ? highlightSearch(p.branch, searchTerm) : (p.branch || '-');
     const operatorHtml = searchTerm ? highlightSearch(p.operator, searchTerm) : (p.operator || '-');
     const reasonHtml = searchTerm ? highlightSearch(p.reason, searchTerm) : (p.reason || '-');
+    
+    // 🎯 แสดงปัจจัยความเสี่ยงแบบ Tooltip
+    const riskTooltip = risk.factors.length > 0 ? `title="${risk.factors.join(' • ')}"` : '';
     
     tr.innerHTML = `
       <td style="color:var(--text3);font-size:11px">${i+1}</td>
@@ -1452,6 +1711,11 @@ function renderTable() {
       <td style="text-align:center"><span class="mono">${p.holdDays || '-'}</span></td>
       <td><div class="truncate" title="${p.reason||''}">${reasonHtml}</div></td>
       <td style="text-align:center">${photoCell}</td>
+      <td style="text-align:center">
+        <span class="status-pill" style="background:${risk.color}15;color:${risk.color};border-color:${risk.color}40" ${riskTooltip}>
+          ${risk.icon} ${risk.level}
+        </span>
+      </td>
       <td style="text-align:center">
         <div style="display:flex;align-items:center;justify-content:center;gap:6px">
           <select class="status-select ${statusClass}" onchange="updateStatus(${p.id},this)" data-id="${p.id}">
@@ -1479,7 +1743,7 @@ function updateStatus(id, selectEl) {
   if (p) p.status = newStatus;
   const fp = filteredParcels.find(x => x.id === id);
   if (fp) fp.status = newStatus;
-  updateStats(); renderDailyGrid(); renderCharts(); autoSave();
+  updateStats(); renderDailyGrid(); renderCharts(); renderBehaviorInsights(); autoSave();
 }
 
 function deleteParcel(id) {
@@ -1488,7 +1752,7 @@ function deleteParcel(id) {
   parcels = parcels.filter(x => x.id !== id);
   filteredParcels = filteredParcels.filter(x => x.id !== id);
   if (p && photos[p.tracking]) delete photos[p.tracking];
-  updateStats(); renderTable(); renderDailyGrid(); renderCharts(); autoSave();
+  updateStats(); renderTable(); renderDailyGrid(); renderCharts(); renderBehaviorInsights(); autoSave();
   toast('ลบรายการแล้ว', 'success');
 }
 
@@ -1496,7 +1760,7 @@ function confirmClearAll() {
   if (!parcels.length) { toast('ไม่มีข้อมูล', 'warning'); return; }
   if (!confirm(`⚠️ ล้างข้อมูลทั้งหมด ${parcels.length} รายการ? ไม่สามารถกู้คืนได้`)) return;
   parcels = []; filteredParcels = []; photos = {};
-  updateStats(); renderTable(); renderDailyGrid(); renderCharts(); autoSave();
+  updateStats(); renderTable(); renderDailyGrid(); renderCharts(); renderBehaviorInsights(); autoSave();
   toast('ล้างข้อมูลทั้งหมดแล้ว', 'success');
 }
 
@@ -1654,9 +1918,10 @@ async function fetchFromSheet() {
     const imported = result.data.map((item, idx) => normalizeParcel(item, idx));
     parcels = imported.map(p => ({ ...p, photoUrl: photos[p.tracking] || p.photoUrl }));
     filteredParcels = [...parcels];
-    updateStats(); renderTable(); renderDailyGrid(); renderDailyDashboard(); renderCharts();
+    updateStats(); renderTable(); renderDailyGrid(); renderDailyDashboard(); renderCharts(); renderBehaviorInsights();
     setSyncStatus('ok', `ซิงค์สำเร็จ ${parcels.length} รายการ`); lsSet('lastSync', new Date().toISOString());
     toast(`✅ ดึงข้อมูลสำเร็จ ${parcels.length} รายการ`, 'success');
+    alertHighRiskParcels(); // 🚨 Auto-alert after fetch
   } catch (err) {
     setSyncStatus('err', 'เชื่อมต่อล้มเหลว'); toast(`❌ ดึงข้อมูลไม่สำเร็จ: ${err.message}`, 'error', 5000); loadLocal();
   } finally { isBusy = false; hideLoading(); }
@@ -1749,7 +2014,7 @@ function loadLocal() {
     const saved = ls('parcels_v6'), savedPhotos = ls('photos_v6');
     if (saved) { parcels = JSON.parse(saved); filteredParcels = [...parcels]; }
     if (savedPhotos) { photos = JSON.parse(savedPhotos); parcels.forEach(p => { if (photos[p.tracking]) p.photoUrl = photos[p.tracking]; }); }
-    updateStats(); renderTable(); renderDailyGrid(); renderDailyDashboard(); renderCharts();
+    updateStats(); renderTable(); renderDailyGrid(); renderDailyDashboard(); renderCharts(); renderBehaviorInsights();
     if (parcels.length) setSyncStatus('warn', `ข้อมูลในเครื่อง ${parcels.length} รายการ`);
   } catch (e) { dbg('loadLocal error: ' + e.message, 'err'); }
 }
@@ -1772,7 +2037,7 @@ function restoreData(e) {
         ['scriptUrl','driveFolderId','ghUser','ghRepo'].forEach(k => { if(backup.settings[k]) lsSet(k, backup.settings[k]); });
         if (backup.settings.theme) { lsSet('theme', backup.settings.theme); applyTheme(backup.settings.theme); }
       }
-      updateStats(); renderTable(); renderDailyGrid(); renderDailyDashboard(); renderCharts(); loadAllSettings(); toast('กู้คืนข้อมูลสำเร็จ', 'success');
+      updateStats(); renderTable(); renderDailyGrid(); renderDailyDashboard(); renderCharts(); renderBehaviorInsights(); loadAllSettings(); toast('กู้คืนข้อมูลสำเร็จ', 'success');
     } catch (err) { toast('กู้คืนไม่สำเร็จ: ' + err.message, 'error'); }
   };
   reader.readAsText(file); e.target.value = '';
@@ -1836,7 +2101,7 @@ function clearGitHub() { ['ghUser','ghRepo','ghToken'].forEach(k => { localStora
 function toggleToken() { const el = document.getElementById('ghToken'); const icon = document.getElementById('tokenEye'); if (el.type === 'password') { el.type = 'text'; icon.className = 'fas fa-eye-slash'; } else { el.type = 'password'; icon.className = 'fas fa-eye'; } }
 function showConnResult(id, html, type = 'info') { const el = document.getElementById(id); if (!el) return; el.style.display = 'block'; el.className = 'conn-result conn-' + type; el.innerHTML = html; }
 
-// ===== CHARTS (✅ แก้ไข Syntax Error เรียบร้อย) =====
+// ===== CHARTS =====
 function getChartColors() {
   const isDark = !document.body.classList.contains('light');
   return { text: isDark ? '#94a3b8' : '#64748b', grid: isDark ? '#1e2d47' : '#e2e8f0' };
