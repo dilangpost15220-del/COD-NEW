@@ -712,9 +712,6 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
           <button class="btn btn-primary" onclick="applyAdvancedFilter()"><i class="fas fa-search"></i> ค้นหา</button>
           <button class="btn btn-ghost" onclick="clearAllFilters()"><i class="fas fa-times"></i> ล้างตัวกรองทั้งหมด</button>
           <span class="search-results-count" id="searchResultsCount"></span>
-          <button class="btn btn-ghost btn-sm" onclick="confirmClearAll()" style="margin-left:auto;color:var(--danger);border-color:rgba(239,68,68,0.2)">
-            <i class="fas fa-trash-alt"></i> ล้างข้อมูลทั้งหมด
-          </button>
         </div>
       </div>
 
@@ -974,7 +971,7 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
               <div class="settings-icon yellow"><i class="fas fa-database"></i></div>
               <div>
                 <div class="settings-title">④ จัดการข้อมูลในเครื่อง (LocalStorage)</div>
-                <div class="settings-sub">สำรอง / กู้คืน / ล้างข้อมูลทั้งหมด</div>
+                <div class="settings-sub">สำรอง / กู้คืนข้อมูล</div>
               </div>
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -982,8 +979,6 @@ body.light .toast-info { background: #dbeafe; color: #1e40af; border-color: #bfd
               <button class="btn btn-primary" onclick="document.getElementById('restoreFile').click()"><i class="fas fa-upload"></i> กู้คืนข้อมูล</button>
             </div>
             <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreData(event)">
-            <hr class="divider">
-            <button class="btn btn-danger btn-full" onclick="confirmClearAll()"><i class="fas fa-trash-alt"></i> ล้างข้อมูลทั้งหมดในเครื่อง (ไม่สามารถกู้คืนได้)</button>
           </div>
         </div>
         <div id="settings-debug" style="display:none">
@@ -1028,6 +1023,9 @@ function calculateRiskScore(parcel) {
   let score = 0;
   let factors = [];
   
+  // ⚠️ หมายเหตุ: การมี/ไม่มีรูปภาพ "ไม่นำมาคำนวณความเสี่ยง"
+  // เพราะรูปภาพเป็นเพียง "หลักฐานการปฏิบัติงาน" ไม่ใช่ตัวชี้วัดความสำเร็จของการนำจ่าย
+  
   // 📅 ปัจจัยด้านระยะเวลาถือครอง
   const holdDays = parseInt(parcel.holdDays) || 0;
   if (holdDays >= 5) { score += 40; factors.push('ถือครอง ≥5 วัน'); }
@@ -1038,25 +1036,26 @@ function calculateRiskScore(parcel) {
   if (attempts >= 3) { score += 30; factors.push('พยายาม ≥3 ครั้ง'); }
   else if (attempts >= 2) { score += 15; factors.push('พยายาม ≥2 ครั้ง'); }
   
-  // ❌ ปัจจัยด้านสถานะและสาเหตุ
+  // ❌ ปัจจัยด้านสถานะและสาเหตุ (เฉพาะ "ไม่สำเร็จ" เท่านั้น)
   if (parcel.status === 'ไม่สำเร็จ') {
-    score += 20;
+    score += 20; // คะแนนพื้นฐานสำหรับสถานะไม่สำเร็จ
     if (parcel.reason?.includes('ไม่อยู่')) { score += 10; factors.push('ผู้รับไม่อยู่'); }
     if (parcel.reason?.includes('ปิด') || parcel.reason?.includes('ย้าย')) { score += 15; factors.push('ที่อยู่มีปัญหา'); }
     if (parcel.reason?.includes('ปฏิเสธ')) { score += 20; factors.push('ผู้รับปฏิเสธ'); }
   }
+  // ✅ หากสถานะเป็น "สำเร็จ" → ไม่บวกคะแนนเพิ่มจากสถานะ (ถือว่าจบงานได้ดี)
   
   // 🏢 ปัจจัยด้านสาขา
   if (parcel.branch && highRiskBranches.includes(parcel.branch)) {
     score += 10; factors.push('สาขาเสี่ยง');
   }
   
-  // 📦 ปัจจัยด้าน Lazada (มักมีเงื่อนไขพิเศษ)
+  // 📦 ปัจจัยด้าน Lazada
   if (parcel.lazada && parcel.lazada.toLowerCase() === 'yes') {
     score += 5; factors.push('พัสดุ Lazada');
   }
   
-  // 🎯 แปลงคะแนนเป็นระดับและคำแนะนำ
+  // 🎯 แปลงคะแนนเป็นระดับ
   let level, color, advice, icon;
   if (score >= 70) {
     level = 'สูง'; color = 'var(--danger)'; advice = '📞 ติดต่อล่วงหน้า + ยืนยันที่อยู่ + พิจารณาส่งกลับ'; icon = '🔴';
@@ -1756,6 +1755,7 @@ function deleteParcel(id) {
   toast('ลบรายการแล้ว', 'success');
 }
 
+// ✅ CONFIRM CLEAR ALL - ยังคงอยู่ (ไม่ลบ)
 function confirmClearAll() {
   if (!parcels.length) { toast('ไม่มีข้อมูล', 'warning'); return; }
   if (!confirm(`⚠️ ล้างข้อมูลทั้งหมด ${parcels.length} รายการ? ไม่สามารถกู้คืนได้`)) return;
